@@ -1,0 +1,115 @@
+@import 'mediawiki.skin.variables.less';
+
+.discourse-profile {
+	display: grid;
+	grid-template-areas:
+		"avatar header"
+		"avatar stats"
+		"avatar bio"
+		"tabs tabs";
+	grid-template-columns: 160px auto;
+
+
+	.discourse-profile-header {
+		align-items: center;
+		display: flex;
+		flex-wrap: wrap;
+		grid-area: header;
+
+		.discourse-profile-username {
+			border-bottom: 0;
+			font-size: 28px;
+			font-weight: 700;
+			margin: 0;
+			padding: 0;
+		}
+
+		.discourse-profile-name {
+			font-size: 20px;
+			margin-left: 12px;
+		}
+		
+		.discourse-profile-group {
+			background-color: @background-color-progressive;
+			border-radius: 5px;
+			margin-left: 12px;
+			padding: 3px 8px;
+			font-size: 12px;
+			font-weight: bold;
+		}
+	}
+	
+	.discourse-profile-avatar {
+		border-radius: 50%;
+		grid-area: avatar;
+		justify-content: center;
+		width: 144px;
+	}
+	
+	.discourse-profile-bio {
+		grid-area: bio;
+	}
+	
+	.discourse-profile-stats {
+		display: flex;
+		font-size: 14px;
+		font-weight: bold;
+		grid-area: stats;
+		list-style-type: none;
+		margin: 0;
+		text-transform: uppercase;
+		
+		.discourse-profile-edits::after {
+			content: "·";
+			padding: 0 12px;
+		}
+	}
+	
+	.discourse-profile-tabs {
+		border-bottom: 1px solid @border-color-base;
+		display: flex;
+		grid-area: tabs;
+		list-style-type: none;
+		margin: 0;
+		padding-top: 20px;
+		
+		.discourse-profile-link {
+			padding: 10px;
+		}
+	}
+}
+
+.ns-2 .discourse-profile-user,
+.ns--1 .discourse-profile-contributions {
+	border-bottom: 4px solid @border-color-progressive--active;
+}
+
+.skin-vector-2022 .mw-body > .vector-page-titlebar,
+.skin-vector-2022 .vector-page-toolbar,
+.skin-vector-2022 .mw-first-heading,
+.skin-vector-2022.mw-special-Contributions .vector-body > #contentSub {
+	display: none;
+}
+
+@media ( max-width: @max-width-breakpoint-mobile ) {
+	.discourse-profile {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+
+		.discourse-profile-header {
+			flex-direction: column;
+			justify-content: center;
+
+			.discourse-profile-group {
+				margin-top: 10px;
+			}
+		}
+
+		.discourse-profile-avatar,
+		.discourse-profile-stats,
+		.discourse-profile-bio {
+			margin: 5px auto;
+		}
+	}
+}

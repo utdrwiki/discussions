@@ -1,0 +1,114 @@
+{
+	"name": "Discourse",
+	"version": "1.0.0",
+	"author": [
+		"[https://kocka.tech/ Luka Simić]"
+	],
+	"url": "https://undertale.wiki/d/",
+	"descriptionmsg": "discourse-desc",
+	"license-name": "MIT",
+	"type": "other",
+	"MessagesDirs": {
+		"Discourse": [
+			"i18n"
+		]
+	},
+    "SpecialPages": {
+        "DiscourseConnect": {
+            "class": "MediaWiki\\Extension\\Discourse\\SpecialPage\\DiscourseConnect",
+            "services": [
+                "PermissionManager",
+                "UserGroupManager"
+            ]
+        }
+    },
+	"requires": {
+		"MediaWiki": ">= 1.43.0"
+	},
+	"AutoloadNamespaces": {
+		"MediaWiki\\Extension\\Discourse\\": "includes/"
+	},
+    "AvailableRights": [
+        "discourse-admin",
+        "discourse-moderator"
+    ],
+    "GroupPermissions": {
+        "interface-admin": {
+            "discourse-admin": true
+        },
+        "sysop": {
+            "discourse-moderator": true
+        }
+    },
+	"Hooks": {
+        "ArticleFromTitle": "main",
+        "LoginFormValidErrorMessages": "main",
+        "SpecialPageBeforeExecute": "main"
+	},
+    "HookHandlers": {
+        "main": {
+            "class": "MediaWiki\\Extension\\Discourse\\Hooks",
+            "services": [
+                "UserNameUtils"
+            ]
+        }
+    },
+    "ResourceModules": {
+        "ext.discourse.profile.scripts": {
+            "scripts": [
+                "ext.discourse.profile.js"
+            ]
+        },
+        "ext.discourse.profile.styles": {
+            "styles": [
+                "ext.discourse.profile.less"
+            ]
+        }
+    },
+    "ResourceFileModulePaths": {
+        "localBasePath": "resources",
+        "remoteExtPath": "Discourse/resources"
+    },
+	"config_prefix": "wgDiscourse",
+	"config": {
+        "ApiKey": {
+            "description": "The API key of your Discourse instance to use for profile retrieval",
+            "value": false
+        },
+        "ApiUsername": {
+            "description": "The username of the user to use for API requests",
+            "value": "system",
+            "public": true
+        },
+        "BaseUrl": {
+            "description": "The base URL of your Discourse instance",
+            "value": false,
+            "public": true
+        },
+        "ConnectSecret": {
+            "description": "The value you set under Discourse's discourse_connect_secret setting",
+            "value": false
+        },
+        "DefaultAvatarColor": {
+            "description": "The default color of the avatar background when there is no avatar image available",
+            "value": "FF0000",
+            "public": true
+        },
+        "EnableProfile": {
+            "description": "Whether to enable the Discourse profile integration",
+            "value": true,
+            "public": true
+        },
+        "GroupMap": {
+            "description": "A mapping of MediaWiki groups to Discourse groups and permissions.",
+            "value": null,
+            "public": true
+        },
+        "SuppressWelcomeMessage": {
+            "description": "Whether to suppress the Discourse welcome message",
+            "value": false,
+            "public": true
+        }
+	},
+	"manifest_version": 2
+}
