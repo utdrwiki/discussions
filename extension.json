@@ -13,102 +13,131 @@
 			"i18n"
 		]
 	},
-    "SpecialPages": {
-        "DiscourseConnect": {
-            "class": "MediaWiki\\Extension\\Discourse\\SpecialPage\\DiscourseConnect",
-            "services": [
-                "PermissionManager",
-                "UserGroupManager"
-            ]
-        }
-    },
+	"SpecialPages": {
+		"DiscourseConnect": {
+			"class": "MediaWiki\\Extension\\Discourse\\SpecialPage\\DiscourseConnect",
+			"services": [
+				"PermissionManager",
+				"UserGroupManager"
+			]
+		}
+	},
 	"requires": {
 		"MediaWiki": ">= 1.43.0"
+	},
+	"APIModules": {
+		"discoursenotify": {
+			"class": "MediaWiki\\Extension\\Discourse\\Notify\\DiscourseNotify",
+			"services": [
+				"UserFactory",
+				"MainWANObjectCache",
+				"ExtensionRegistry"
+			]
+		}
 	},
 	"AutoloadNamespaces": {
 		"MediaWiki\\Extension\\Discourse\\": "includes/"
 	},
-    "AvailableRights": [
-        "discourse-admin",
-        "discourse-moderator"
-    ],
-    "GroupPermissions": {
-        "interface-admin": {
-            "discourse-admin": true
-        },
-        "sysop": {
-            "discourse-moderator": true
-        }
-    },
-	"Hooks": {
-        "ArticleFromTitle": "main",
-        "LoginFormValidErrorMessages": "main",
-        "SpecialPageBeforeExecute": "main"
+	"AvailableRights": [
+		"discourse-admin",
+		"discourse-moderator"
+	],
+	"GroupPermissions": {
+		"interface-admin": {
+			"discourse-admin": true
+		},
+		"sysop": {
+			"discourse-moderator": true
+		}
 	},
-    "HookHandlers": {
-        "main": {
-            "class": "MediaWiki\\Extension\\Discourse\\Hooks",
-            "services": [
-                "UserNameUtils"
-            ]
-        }
-    },
-    "ResourceModules": {
-        "ext.discourse.profile.scripts": {
-            "scripts": [
-                "ext.discourse.profile.js"
-            ]
-        },
-        "ext.discourse.profile.styles": {
-            "styles": [
-                "ext.discourse.profile.less"
-            ]
-        }
-    },
-    "ResourceFileModulePaths": {
-        "localBasePath": "resources",
-        "remoteExtPath": "Discourse/resources"
-    },
+	"Hooks": {
+		"ArticleFromTitle": "main",
+		"LoginFormValidErrorMessages": "main",
+		"SpecialPageBeforeExecute": "main",
+		"BeforeCreateEchoEvent": "echo"
+	},
+	"HookHandlers": {
+		"main": {
+			"class": "MediaWiki\\Extension\\Discourse\\Hooks",
+			"services": [
+				"UserNameUtils",
+				"DiscourseProfileRenderer"
+			]
+		},
+		"echo": {
+			"class": "MediaWiki\\Extension\\Discourse\\Notify\\EchoHooks",
+			"services": []
+		}
+	},
+	"ResourceModules": {
+		"ext.discourse.profile.scripts": {
+			"scripts": [
+				"ext.discourse.profile.js"
+			]
+		},
+		"ext.discourse.profile.styles": {
+			"styles": [
+				"ext.discourse.profile.less"
+			]
+		}
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "resources",
+		"remoteExtPath": "Discourse/resources"
+	},
 	"config_prefix": "wgDiscourse",
 	"config": {
-        "ApiKey": {
-            "description": "The API key of your Discourse instance to use for profile retrieval",
-            "value": false
-        },
-        "ApiUsername": {
-            "description": "The username of the user to use for API requests",
-            "value": "system",
-            "public": true
-        },
-        "BaseUrl": {
-            "description": "The base URL of your Discourse instance",
-            "value": false,
-            "public": true
-        },
-        "ConnectSecret": {
-            "description": "The value you set under Discourse's discourse_connect_secret setting",
-            "value": false
-        },
-        "DefaultAvatarColor": {
-            "description": "The default color of the avatar background when there is no avatar image available",
-            "value": "FF0000",
-            "public": true
-        },
-        "EnableProfile": {
-            "description": "Whether to enable the Discourse profile integration",
-            "value": true,
-            "public": true
-        },
-        "GroupMap": {
-            "description": "A mapping of MediaWiki groups to Discourse groups and permissions.",
-            "value": null,
-            "public": true
-        },
-        "SuppressWelcomeMessage": {
-            "description": "Whether to suppress the Discourse welcome message",
-            "value": false,
-            "public": true
-        }
+		"ApiKey": {
+			"description": "The API key of your Discourse instance to use for profile retrieval",
+			"value": false
+		},
+		"ApiUsername": {
+			"description": "The username of the user to use for API requests",
+			"value": "system",
+			"public": true
+		},
+		"BaseUrl": {
+			"description": "The base URL of your Discourse instance",
+			"value": false,
+			"public": true
+		},
+		"BaseUrlInternal": {
+			"description": "The URL that MediaWiki will use to request data from Discourse. If Discourse is running on the same host as MediaWiki, you can use this option to avoid unnecessary round trips.",
+			"value": null,
+			"public": true
+		},
+		"ConnectSecret": {
+			"description": "The value you set under Discourse's discourse_connect_secret setting",
+			"value": false
+		},
+		"DefaultAvatarColor": {
+			"description": "The default color of the avatar background when there is no avatar image available",
+			"value": "FF0000",
+			"public": true
+		},
+		"EnableProfile": {
+			"description": "Whether to enable the Discourse profile integration",
+			"value": true,
+			"public": true
+		},
+		"GroupMap": {
+			"description": "A mapping of MediaWiki groups to Discourse groups and permissions.",
+			"value": null,
+			"public": true
+		},
+		"SuppressWelcomeMessage": {
+			"description": "Whether to suppress the Discourse welcome message",
+			"value": false,
+			"public": true
+		},
+		"UnixSocket": {
+			"description": "The path to the Unix socket that Discourse is listening on. If Discourse is running on the same host as MediaWiki and using Unix sockets, you can use this option to avoid unnecessary round trips.",
+			"value": null,
+			"public": true
+		}
 	},
+	"ServiceWiringFiles": [
+		"includes/ServiceWiring.php"
+	],
 	"manifest_version": 2
 }
