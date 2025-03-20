@@ -1,0 +1,17 @@
+<?php
+
+use MediaWiki\Extension\Discourse\Profile\ProfileRenderer;
+use MediaWiki\Logger\LoggerFactory;
+use MediaWiki\MediaWikiServices;
+
+return [
+    'DiscourseProfileRenderer' => static function ( MediaWikiServices $services ) {
+        return new ProfileRenderer(
+            $services->getUserFactory(),
+            $services->getUserGroupManager(),
+            $services->getHttpRequestFactory(),
+            $services->getMainWANObjectCache(),
+            LoggerFactory::getInstance( 'Discourse' ),
+        );
+    },
+];

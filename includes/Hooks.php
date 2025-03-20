@@ -15,9 +15,11 @@ class Hooks implements
 	SpecialPageBeforeExecuteHook
 {
 	private UserNameUtils $userNameUtils;
+	private ProfileRenderer $renderer;
 
-	public function __construct( UserNameUtils $userNameUtils ) {
+	public function __construct( UserNameUtils $userNameUtils, ProfileRenderer $renderer ) {
 		$this->userNameUtils = $userNameUtils;
+		$this->renderer = $renderer;
 	}
 
 	/** @inheritDoc */
@@ -33,7 +35,7 @@ class Hooks implements
 			!$title->isSubpage() &&
 			$this->userNameUtils->isUsable( $title->getText() )
 		) {
-			$article = new UserProfilePage( $title, $title->getText() );
+			$article = new UserProfilePage( $title, $this->renderer );
 		}
 	}
 
@@ -46,8 +48,7 @@ class Hooks implements
 			$subPage !== null &&
 			$this->userNameUtils->isUsable( $subPage )
 		) {
-			$renderer = new ProfileRenderer( $subPage, $special->getContext() );
-			$renderer->render();
+			$this->renderer->render( $subPage, $special->getContext() );
 		}
 	}
 }

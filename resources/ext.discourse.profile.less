@@ -48,6 +48,8 @@
 	
 	.discourse-profile-bio {
 		grid-area: bio;
+		max-height: 300px;
+		overflow: auto;
 	}
 	
 	.discourse-profile-stats {
@@ -89,6 +91,10 @@
 .skin-vector-2022 .mw-first-heading,
 .skin-vector-2022.mw-special-Contributions .vector-body > #contentSub {
 	display: none;
+}
+
+.skin-vector-2022 .mw-body {
+	grid-template-areas: 'content columnEnd';
 }
 
 @media ( max-width: @max-width-breakpoint-mobile ) {
