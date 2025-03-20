@@ -1,0 +1,6 @@
+en:
+  site_settings:
+    mediawiki_enabled: "Enable the MediaWiki integration plugin"
+    mediawiki_api_path: "Path to MediaWiki's api.php"
+    mediawiki_validate_tls: "Validate TLS connections to MediaWiki"
+    mediawiki_host_override: "MediaWiki API request Host header override"
