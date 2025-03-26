@@ -31,8 +31,8 @@ class MyQueryScript extends Maintenance {
         
         $apiKey = $config->get('DiscourseApiKey');
         $baseUrl = $config->get('DiscourseBaseUrl');
-		$apiUrl = $config->get( 'DiscourseBaseUrlInternal', $baseUrl );
-		$unixSocket = $config->get( 'DiscourseUnixSocket' );
+        $apiUrl = $config->get( 'DiscourseBaseUrlInternal', $baseUrl );
+        $unixSocket = $config->get( 'DiscourseUnixSocket' );
         
         $pages = $pageStore->newSelectQueryBuilder()
         ->whereNamespace(NS_MAIN) // Fetch only mainspace pages
@@ -55,16 +55,16 @@ class MyQueryScript extends Maintenance {
                 if (!$redirectTarget || $redirectTarget->getNamespace() !== NS_MAIN) {
                     continue;
                 }
-
+                
                 $targetTitle = Title::newFromLinkTarget($redirectTarget);
                 $cleanTargetTitle = $this->sanitizePageTitle($targetTitle);
                 if ($cleanTargetTitle === null) {
                     $this->output("Warning: Redirect title \"" . $targetTitle->getText() . "\" could not be transformed to a clean tag and is skipped." . "\n");
                     continue;
                 }
-
+                
                 $redirectTitles[] = [$cleanTitleText, $cleanTargetTitle];
-
+                
                 if (!in_array($cleanTargetTitle, $pageTitles)) {
                     $pageTitles[] = $cleanTargetTitle;
                 }
@@ -95,9 +95,9 @@ class MyQueryScript extends Maintenance {
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => $headers,
         ]);
-		if ( $unixSocket !== null ) {
-			curl_setopt($curl, CURLOPT_UNIX_SOCKET_PATH, $unixSocket);
-		}
+        if ( $unixSocket !== null ) {
+            curl_setopt($curl, CURLOPT_UNIX_SOCKET_PATH, $unixSocket);
+        }
         
         $response = curl_exec($curl);
         if (curl_errno($curl)) {
@@ -115,7 +115,7 @@ class MyQueryScript extends Maintenance {
         curl_close($curl);
         
         $this->output("Found " . sizeof($redirectTitles) . " synonyms to upload.\n");
-
+        
         foreach ($redirectTitles as $redirectTitle) {
             [$redirectPageTitle, $targetPageTitle] = $redirectTitle;
             $curl = curl_init();
@@ -128,9 +128,9 @@ class MyQueryScript extends Maintenance {
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_HTTPHEADER => $headers,
             ]);
-		    if ( $unixSocket !== null ) {
-			    curl_setopt($curl, CURLOPT_UNIX_SOCKET_PATH, $unixSocket);
-		    }
+            if ( $unixSocket !== null ) {
+                curl_setopt($curl, CURLOPT_UNIX_SOCKET_PATH, $unixSocket);
+            }
             
             $response = curl_exec($curl);
             if (curl_errno($curl)) {
