@@ -152,7 +152,7 @@ class DiscourseNotify extends ApiBase {
 
 	private function purgeUser( array $args ): void {
 		// It's cheaper to clear cache without looking up the user.
-		$cacheKey = $this->cache->makeKey( 'DiscourseProfile', $args['user_id'] );
+		$cacheKey = $this->cache->makeGlobalKey( 'DiscourseProfile', $args['user_id'] );
 		$this->cache->delete( $cacheKey );
 		$this->logger->debug( "Purged profile of user {$args['user_id']}" );
 	}

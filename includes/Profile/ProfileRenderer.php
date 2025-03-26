@@ -124,7 +124,7 @@ class ProfileRenderer {
 
 	private function getProfileDataCached( User $user, Config $config ): ?array {
 		return $this->cache->getWithSetCallback(
-			$this->cache->makeKey( 'DiscourseProfile', $user->getId() ),
+			$this->cache->makeGlobalKey( 'DiscourseProfile', $user->getId() ),
 			$this->cache::TTL_HOUR,
 			function ( $oldValue, &$ttl, array &$setOpts ) use ( $user, $config ) {
 				$profileData = $this->getProfileData( $user, $config );
