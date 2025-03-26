@@ -24,10 +24,12 @@ class MyQueryScript extends Maintenance {
     }
     
     public function execute() {
-        $pageStore = MediaWikiServices::getInstance()->getPageStore();
-        $redirectStore = MediaWikiServices::getInstance()->getRedirectStore();
-        $titleFactory = MediaWikiServices::getInstance()->getTitleFactory();
-        $config = MediaWikiServices::getInstance()->getMainConfig();
+        $services = $this->getServiceContainer();
+        $pageStore = $services->getPageStore();
+        $redirectStore = $services->getRedirectStore();
+        $titleFactory = $services->getTitleFactory();
+        $config = $this->getConfig();
+        $discourseAPI = $services->getService('DiscourseAPIService');
         
         $apiKey = $config->get('DiscourseApiKey');
         $baseUrl = $config->get('DiscourseBaseUrl');
@@ -44,7 +46,7 @@ class MyQueryScript extends Maintenance {
         
         foreach ($pages as $page) {
             $title = $titleFactory->newFromPageIdentity($page);
-            $cleanTitleText = $this->sanitizePageTitle($title);
+            $cleanTitleText = $discourseAPI->sanitizePageTitle($title);
             if ($cleanTitleText === null) {
                 $this->output("Warning: Page title \"" . $title->getText() . "\" could not be transformed to a clean tag and is skipped." . "\n");
                 continue;
@@ -57,7 +59,7 @@ class MyQueryScript extends Maintenance {
                 }
                 
                 $targetTitle = Title::newFromLinkTarget($redirectTarget);
-                $cleanTargetTitle = $this->sanitizePageTitle($targetTitle);
+                $cleanTargetTitle = $discourseAPI->sanitizePageTitle($targetTitle);
                 if ($cleanTargetTitle === null) {
                     $this->output("Warning: Redirect title \"" . $targetTitle->getText() . "\" could not be transformed to a clean tag and is skipped." . "\n");
                     continue;
@@ -144,30 +146,6 @@ class MyQueryScript extends Maintenance {
                 }
             }
         }
-    }
-    
-    private function sanitizePageTitle($title) {
-        $titleText = $title->getText();
-        // Always skip sub-pages
-        if (strpos($titleText, '/') !== false) {
-            return null;
-        }
-        
-        $cleanTitle = $title->getPrefixedText();
-        
-        // To lower case
-        $cleanTitle = strtolower($title);
-        // Replace spaces with underscores
-        $cleanTitle = str_replace(' ', '_', $cleanTitle);
-        // Remove special characters
-        $cleanTitle = preg_replace('/[^a-z0-9_-]/', '', $cleanTitle);
-        
-        // If there's nothing but special characters, return null
-        if ($cleanTitle === "") {
-            return null;
-        }
-        
-        return $cleanTitle;
     }
 }
 
