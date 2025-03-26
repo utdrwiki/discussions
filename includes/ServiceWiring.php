@@ -16,6 +16,7 @@ return [
         );
     },
     'DiscourseAPIService' => static function ( MediaWikiServices $services ) {
-        return new DiscourseAPIService();
+        $baseUrl = $services->getMainConfig()->get('DiscourseBaseUrl');
+        return new DiscourseAPIService($baseUrl);
     }
 ];

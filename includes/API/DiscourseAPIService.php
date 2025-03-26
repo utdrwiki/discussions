@@ -3,6 +3,16 @@
 namespace MediaWiki\Extension\Discourse\API;
 
 class DiscourseAPIService {
+    private string $baseUrl;
+
+    public function __construct( string $baseUrl ) {
+        $this->baseUrl = $baseUrl;
+    }
+
+    public function getBaseUrl(): string {
+        return $this->baseUrl;
+    }
+
     public function sanitizePageTitle($title) {
         $titleText = $title->getText();
         // Always skip sub-pages
@@ -24,6 +34,6 @@ class DiscourseAPIService {
             return null;
         }
         
-        return $cleanTitle;
+        return substr($cleanTitle, 0, 50);
     }
 }

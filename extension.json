@@ -54,6 +54,7 @@
 		"ArticleFromTitle": "main",
 		"LoginFormValidErrorMessages": "main",
 		"SpecialPageBeforeExecute": "main",
+		"TalkPageLinkResolve": "main",
 		"BeforeCreateEchoEvent": "echo"
 	},
 	"HookHandlers": {
@@ -61,7 +62,8 @@
 			"class": "MediaWiki\\Extension\\Discourse\\Hooks",
 			"services": [
 				"UserNameUtils",
-				"DiscourseProfileRenderer"
+				"DiscourseProfileRenderer",
+				"DiscourseAPIService"
 			]
 		},
 		"echo": {

@@ -2,8 +2,10 @@
 
 namespace MediaWiki\Extension\Discourse;
 
+use MediaWiki\Extension\Discourse\API\DiscourseAPIService;
 use MediaWiki\Extension\Discourse\Profile\ProfileRenderer;
 use MediaWiki\Extension\Discourse\Profile\UserProfilePage;
+use MediaWiki\Extension\Discourse\Hooks\TalkPageLinkResolveHook;
 use MediaWiki\Hook\LoginFormValidErrorMessagesHook;
 use MediaWiki\Page\Hook\ArticleFromTitleHook;
 use MediaWiki\SpecialPage\Hook\SpecialPageBeforeExecuteHook;
@@ -12,14 +14,17 @@ use MediaWiki\User\UserNameUtils;
 class Hooks implements
 	ArticleFromTitleHook,
 	LoginFormValidErrorMessagesHook,
-	SpecialPageBeforeExecuteHook
+	SpecialPageBeforeExecuteHook,
+	TalkPageLinkResolveHook
 {
 	private UserNameUtils $userNameUtils;
 	private ProfileRenderer $renderer;
+	private DiscourseAPIService $discourseAPI;
 
-	public function __construct( UserNameUtils $userNameUtils, ProfileRenderer $renderer ) {
+	public function __construct( UserNameUtils $userNameUtils, ProfileRenderer $renderer, DiscourseAPIService $discourseAPI ) {
 		$this->userNameUtils = $userNameUtils;
 		$this->renderer = $renderer;
+		$this->discourseAPI = $discourseAPI;
 	}
 
 	/** @inheritDoc */
@@ -50,5 +55,21 @@ class Hooks implements
 		) {
 			$this->renderer->render( $subPage, $special->getContext() );
 		}
+	}
+
+	/** @inheritDoc */
+	public function onTalkPageLinkResolve(array &$linkAttributes): void {
+		if ($linkAttributes['ns'] !== NS_MAIN) {
+			$linkAttributes['href'] = null;
+			return;
+		}
+
+		$cleanTitle = $this->discourseAPI->sanitizePageTitle( $linkAttributes['title'] );
+
+		if (!$cleanTitle) {
+			return;
+		}
+
+		$linkAttributes['href'] = $this->discourseAPI->getBaseUrl() . '/tag/' . $cleanTitle;
 	}
 }
