@@ -60,7 +60,6 @@ class Hooks implements
 	/** @inheritDoc */
 	public function onTalkPageLinkResolve(array &$linkAttributes): void {
 		if ($linkAttributes['ns'] !== NS_MAIN) {
-			$linkAttributes['href'] = null;
 			return;
 		}
 
