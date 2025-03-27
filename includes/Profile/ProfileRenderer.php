@@ -4,11 +4,10 @@ namespace MediaWiki\Extension\Discourse\Profile;
 
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
-use LogicException;
 use MediaWiki\Config\Config;
 use MediaWiki\Context\RequestContext;
+use MediaWiki\Extension\Discourse\API\DiscourseAPIService;
 use MediaWiki\Html\Html;
-use MediaWiki\Http\HttpRequestFactory;
 use MediaWiki\Output\OutputPage;
 use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\User\User;
@@ -20,20 +19,20 @@ use Wikimedia\ObjectCache\WANObjectCache;
 class ProfileRenderer {
 	private UserFactory $userFactory;
 	private UserGroupManager $userGroupManager;
-	private HttpRequestFactory $httpRequestFactory;
+	private DiscourseAPIService $api;
 	private WANObjectCache $cache;
 	private LoggerInterface $logger;
 
 	public function __construct(
 		UserFactory $userFactory,
 		UserGroupManager $userGroupManager,
-		HttpRequestFactory $httpRequestFactory,
+		DiscourseAPIService $api,
 		WANObjectCache $cache,
 		LoggerInterface $logger,
 	) {
 		$this->userFactory = $userFactory;
 		$this->userGroupManager = $userGroupManager;
-		$this->httpRequestFactory = $httpRequestFactory;
+		$this->api = $api;
 		$this->cache = $cache;
 		$this->logger = $logger;
 	}
@@ -52,39 +51,12 @@ class ProfileRenderer {
 		], implode( $list ) );
 	}
 
-	private function validateConfiguration( Config $config ): void {
-		if ( $config->get( 'DiscourseBaseUrl' ) === false ) {
-			throw new LogicException( '$wgDiscourseBaseUrl must be set' );
-		}
-		if ( $config->get( 'DiscourseApiKey' ) === false ) {
-			throw new LogicException( '$wgDiscourseApiKey must be set' );
-		}
-	}
-
 	private function getProfileData( User $user, Config $config ): ?array {
 		$username = $user->getName();
 		$baseUrl = $config->get( 'DiscourseBaseUrl' );
-		$requestUrl = $config->get( 'DiscourseBaseUrlInternal', $baseUrl );
 		$defaultAvatarColor = $config->get( 'DiscourseDefaultAvatarColor' );
-
-		$requestOptions = [
-			'headers' => [
-				'Api-Key' => $config->get( 'DiscourseApiKey' ),
-				'Api-Username' => $config->get( 'DiscourseApiUsername' ),
-			],
-		];
-		$unixSocket = $config->get( 'DiscourseUnixSocket' );
-		if ( $unixSocket !== null ) {
-			$requestOptions['curl'] = [
-				CURLOPT_UNIX_SOCKET_PATH => $unixSocket
-			];
-		}
-		$url = "$requestUrl/users/by-external/{$user->getId()}.json";
-
-		$client = $this->httpRequestFactory->createGuzzleClient();
 		try {
-			$response = $client->get( $url, $requestOptions );
-			$data = json_decode( $response->getBody()->getContents(), true );
+			$data = $this->api->makeRequest( "/users/by-external/{$user->getId()}.json" );;
 			return [
 				'avatar' => str_replace( '{size}', '144', $data['user']['avatar_template'] ),
 				'bio' => $data['user']['bio_cooked'] ?? '',
@@ -219,13 +191,13 @@ class ProfileRenderer {
 	}
 
 	public function render( string $username, RequestContext $context ): void {
+		$this->api->throwIfConfigInvalid();
 		$user = $this->userFactory->newFromName( $username );
 		if ( !$user->isNamed() ) {
 			return;
 		}
 		$out = $context->getOutput();
 		$config = $context->getConfig();
-		$this->validateConfiguration( $config );
 
 		$profileData = $this->getProfileDataCached( $user, $config );
 		if ( $profileData === null ) {

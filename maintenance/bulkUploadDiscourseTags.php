@@ -2,12 +2,8 @@
 
 namespace MediaWiki\Extension\Discourse\Maintenance;
 
-use MediaWiki\MediaWikiServices;
-use MediaWiki\Page\PageIdentity;
-use MediaWiki\Page\PageStore;
-use MediaWiki\Api\ApiBase;
-use Title;
-use Maintenance;
+use MediaWiki\Maintenance\Maintenance;
+use MediaWiki\Title\Title;
 
 
 $IP = getenv( 'MW_INSTALL_PATH' );
@@ -17,138 +13,92 @@ if ( $IP === false ) {
 require_once "$IP/maintenance/Maintenance.php";
 
 
-class MyQueryScript extends Maintenance {
+class BulkUploadDiscourseTags extends Maintenance {
     public function __construct() {
         parent::__construct();
-        $this->addDescription("A maintenance script for bulk uploading all mainspace article page names as tags to Discourse.");
+        $this->addDescription( 'A maintenance script for bulk uploading all mainspace page names as tags to Discourse.' );
     }
-    
+
     public function execute() {
         $services = $this->getServiceContainer();
         $pageStore = $services->getPageStore();
         $redirectStore = $services->getRedirectStore();
         $titleFactory = $services->getTitleFactory();
-        $config = $this->getConfig();
-        $discourseAPI = $services->getService('DiscourseAPIService');
-        
-        $apiKey = $config->get('DiscourseApiKey');
-        $baseUrl = $config->get('DiscourseBaseUrl');
-        $apiUrl = $config->get( 'DiscourseBaseUrlInternal', $baseUrl );
-        $unixSocket = $config->get( 'DiscourseUnixSocket' );
-        
-        $pages = $pageStore->newSelectQueryBuilder()
-        ->whereNamespace(NS_MAIN) // Fetch only mainspace pages
-        // ->limit(100)
-        ->fetchPageRecords();
-        
+        $discourseAPI = $services->getService( 'DiscourseAPIService' );
+
+        $mainspacePages = $pageStore->newSelectQueryBuilder()
+            ->whereNamespace( NS_MAIN )
+            ->fetchPageRecords();
+
         $pageTitles = [];
         $redirectTitles = [];
-        
-        foreach ($pages as $page) {
-            $title = $titleFactory->newFromPageIdentity($page);
-            $cleanTitleText = $discourseAPI->sanitizePageTitle($title);
-            if ($cleanTitleText === null) {
-                $this->output("Warning: Page title \"" . $title->getText() . "\" could not be transformed to a clean tag and is skipped." . "\n");
+
+        foreach ( $mainspacePages as $page ) {
+            $title = $titleFactory->newFromPageIdentity( $page );
+            $cleanTitleText = $discourseAPI->sanitizePageTitle( $title );
+            if ( $cleanTitleText === null ) {
+                $this->output( "Warning: Page title \"{$title->getText()}\" could not be transformed to a clean tag and is skipped.\n" );
                 continue;
             }
-            
-            if ($page->isRedirect()) {
-                $redirectTarget = $redirectStore->getRedirectTarget($page);
-                if (!$redirectTarget || $redirectTarget->getNamespace() !== NS_MAIN) {
+
+            if ( $page->isRedirect() ) {
+                $redirectTarget = $redirectStore->getRedirectTarget( $page );
+                if ( !$redirectTarget || $redirectTarget->getNamespace() !== NS_MAIN ) {
                     continue;
                 }
-                
-                $targetTitle = Title::newFromLinkTarget($redirectTarget);
-                $cleanTargetTitle = $discourseAPI->sanitizePageTitle($targetTitle);
-                if ($cleanTargetTitle === null) {
-                    $this->output("Warning: Redirect title \"" . $targetTitle->getText() . "\" could not be transformed to a clean tag and is skipped." . "\n");
+
+                $targetTitle = Title::newFromLinkTarget( $redirectTarget );
+                $cleanTargetTitle = $discourseAPI->sanitizePageTitle( $targetTitle );
+                if ( $cleanTargetTitle === null ) {
+                    $this->output( "Warning: Redirect title \"{$targetTitle->getText()}\" could not be transformed to a clean tag and is skipped.\n" );
                     continue;
                 }
-                
-                $redirectTitles[] = [$cleanTitleText, $cleanTargetTitle];
-                
-                if (!in_array($cleanTargetTitle, $pageTitles)) {
+
+                $redirectTitles[] = [ $cleanTitleText, $cleanTargetTitle ];
+
+                if ( !in_array( $cleanTargetTitle, $pageTitles ) ) {
                     $pageTitles[] = $cleanTargetTitle;
                 }
             } else {
-                $pageTitles[] = strtolower($title->getPrefixedText());
-            }
-        }
-        
-        $csvFilePath = sys_get_temp_dir() . '/article_title_tags.csv';
-        $fp = fopen($csvFilePath, 'w');
-        foreach ($pageTitles as $title) {
-            fputcsv($fp, [$title, 'Articles']);
-        }
-        
-        fclose($fp);
-        
-        $this->output("Found " . sizeof($pageTitles) . " tags to upload.\n");
-        
-        $curl = curl_init();
-        
-        $postFields = ['file' => curl_file_create($csvFilePath, 'text/csv', 'tags.csv')];
-        $headers = [ 'Api-Username: system', 'Api-Key: ' . $apiKey ];
-        
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $apiUrl . '/tags/upload.json',
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $postFields,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => $headers,
-        ]);
-        if ( $unixSocket !== null ) {
-            curl_setopt($curl, CURLOPT_UNIX_SOCKET_PATH, $unixSocket);
-        }
-        
-        $response = curl_exec($curl);
-        if (curl_errno($curl)) {
-            $this->output("Failed to upload tags. CURL Error: " . curl_error($curl) . "\n");
-        } else {
-            $info = curl_getinfo($curl);
-            
-            if ($info['http_code'] !== 200) {
-                $this->output("Received error " . $info['http_code'] . " from server: " . $response . "\n");
-            } else {
-                $this->output("Uploaded tags successfully. Response: " . $response . "\n");
-            }
-        }
-        
-        curl_close($curl);
-        
-        $this->output("Found " . sizeof($redirectTitles) . " synonyms to upload.\n");
-        
-        foreach ($redirectTitles as $redirectTitle) {
-            [$redirectPageTitle, $targetPageTitle] = $redirectTitle;
-            $curl = curl_init();
-            $headers = [ 'Api-Username: system', 'Api-Key: ' . $apiKey ];
-            $curlUrl = $apiUrl . '/tag/' . $targetPageTitle . '/synonyms';
-            curl_setopt_array($curl, [
-                CURLOPT_URL => $curlUrl,
-                CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => "synonyms[]=" . $redirectPageTitle,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_HTTPHEADER => $headers,
-            ]);
-            if ( $unixSocket !== null ) {
-                curl_setopt($curl, CURLOPT_UNIX_SOCKET_PATH, $unixSocket);
-            }
-            
-            $response = curl_exec($curl);
-            if (curl_errno($curl)) {
-                $this->output("Failed to upload tags. CURL Error: " . curl_error($curl) . "\n");
-            } else {
-                $info = curl_getinfo($curl);
-                if ($info['http_code'] !== 200) {
-                    $this->output("Received error " . $info['http_code'] . " from server: " . $curlUrl . "\n");
-                } else {
-                    $this->output("Updated synoyms for " . $redirectPageTitle . " -> " . $targetPageTitle . " successfully. Response: " . $response . "\n");
+                if ( !in_array( $cleanTitleText, $pageTitles ) ) {
+                    $pageTitles[] = $cleanTitleText;
                 }
             }
+        }
+        $this->output("Found " . count( $pageTitles ) . " tags to upload.\n");
+
+        $discourseAPI->throwIfConfigInvalid();
+        $csv = implode( array_map(  static function( $title ) {
+            return "$title,Articles\n";
+        }, $pageTitles ) );
+        $discourseAPI->makeRequest( '/tags/upload.json', 'POST', [
+            'multipart' => [
+                [
+                    'name' => 'file',
+                    'contents' => $csv,
+                    'filename' => 'tags.csv',
+                    'headers' => [
+                        'Content-Type' => 'text/csv; charset=UTF-8',
+                    ],
+                ],
+            ]
+        ] );
+
+        $this->output("Found " . count( $redirectTitles ) . " synonyms to upload.\n");
+
+        foreach ( $redirectTitles as $redirectTitle ) {
+            [ $redirectPageTitle, $targetPageTitle ] = $redirectTitle;
+            $discourseAPI->makeRequest( "/tag/$targetPageTitle/synonyms", 'POST', [
+                'form_params' => [
+                    'synonyms[]' => $redirectPageTitle,
+                ],
+            ] );
+            // Avoid getting ratelimited.
+            sleep( 1 );
+            $this->output("Updated synoyms for $redirectPageTitle -> $targetPageTitle successfully.\n");
         }
     }
 }
 
-// Run the script
-$maintClass = MyQueryScript::class;
+$maintClass = BulkUploadDiscourseTags::class;
 require_once RUN_MAINTENANCE_IF_MAIN;

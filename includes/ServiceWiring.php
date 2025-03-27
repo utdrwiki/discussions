@@ -10,13 +10,15 @@ return [
         return new ProfileRenderer(
             $services->getUserFactory(),
             $services->getUserGroupManager(),
-            $services->getHttpRequestFactory(),
+            $services->getService( 'DiscourseAPIService' ),
             $services->getMainWANObjectCache(),
             LoggerFactory::getInstance( 'Discourse' ),
         );
     },
     'DiscourseAPIService' => static function ( MediaWikiServices $services ) {
-        $baseUrl = $services->getMainConfig()->get('DiscourseBaseUrl');
-        return new DiscourseAPIService($baseUrl);
+        return new DiscourseAPIService(
+            $services->getMainConfig(),
+            $services->getHttpRequestFactory(),
+        );
     }
 ];
