@@ -1,0 +1,122 @@
+@import 'mediawiki.skin.variables.less';
+@import 'mediawiki.mixins';
+
+@baseFontSize: 1em;
+@thumbWidth: 80px;
+@cardBorder: 1px solid rgba( 0, 0, 0, 0.2 );
+
+.client-js .article-talk-container {
+  // If not on mobile sized screens, only show padding if another element (like related pages) exists in the after content container.
+  &:first-child {
+    padding: 1em 0 0;
+    box-sizing: border-box;
+  }
+
+  // Always show padding on mobile.
+  @media screen and ( max-width: @max-width-breakpoint-mobile ) {
+    padding: 1em 0 0;
+  }
+  
+  .ve-activated & {
+    display: none;
+  }
+  
+  &-card-list {
+    margin-left: 0;
+    font-size: @baseFontSize;
+    list-style: none;
+    display: grid;
+    row-gap: 10px;
+    
+    li {
+      margin-bottom: 0;
+      box-shadow: 0 1px 1px color-mix(in srgb, var(--background-color-progressive) 50%, transparent);
+      min-height: 5rem;
+      min-width: 0;
+    }
+    
+    a,
+    a:hover {
+      color: inherit;
+      text-decoration: none;
+    }
+    
+    a:hover {
+      .cdx-card {
+        box-shadow: 0 1px 1px rgba( 0, 0, 0, 0.1 );
+      }
+    }
+
+    .cdx-card__text__supporting-text {
+      display: flex;
+      flex-wrap: nowrap;
+
+      gap: 1rem;
+    }
+
+    .cdx-card__text {
+      width: 85%;
+    }
+
+    .cdx-card__text__title {
+      font-size: 1.1em;
+      font-weight: bold;
+      text-transform: none;
+    }
+
+    .cdx-card__text__description {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
+      overflow-wrap: break-word;
+    }
+
+    .cdx-thumbnail__image {
+      background-position: top;
+    }
+  }
+  
+  &-header {
+    color: @color-subtle;
+    border-bottom: 0;
+    padding-bottom: 0.5em;
+    font-size: 0.8em;
+    font-weight: normal;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  &-header-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+}
+
+@supports ( display: grid ) {
+  @media all and ( min-width: @min-width-breakpoint-desktop ) {
+    .article-talk-container-card-list {
+      grid-template-columns: repeat( 3, 1fr );
+      column-gap: 10px;
+      
+      .cdx-card {
+        height: 100%;
+        box-sizing: border-box;
+      }
+    }
+  }
+}
+
+.vector-icon.discourse-icon {
+	min-width: 20px;
+	min-height: 20px;
+	width: 0.875rem;
+	height: 0.875rem;
+	display: inline-block;
+	
+	background-color: var(--color-base);
+	
+	margin-right: 0.3rem;
+}

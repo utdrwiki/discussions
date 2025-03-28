@@ -41,5 +41,7 @@
 	"notification-header-discourse-mentioned-group": "$1 mentioned your group on \"$2\" in Discussions.",
 	"notification-header-discourse-reacted": "$1 reacted on \"$2\" in Discussions.",
 	"right-discourse-admin": "Has administrator privileges in Discussions",
-	"right-discourse-moderator": "Has moderator privileges in Discussions"
+	"right-discourse-moderator": "Has moderator privileges in Discussions",
+	"article-discourse-related-talk-header": "Page Discussions",
+	"article-discourse-related-talk-new-post": "Create new post"
 }

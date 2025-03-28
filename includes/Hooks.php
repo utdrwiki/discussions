@@ -7,6 +7,8 @@ use MediaWiki\Extension\Discourse\Profile\ProfileRenderer;
 use MediaWiki\Extension\Discourse\Profile\UserProfilePage;
 use MediaWiki\Extension\Discourse\Hooks\TalkPageLinkResolveHook;
 use MediaWiki\Hook\LoginFormValidErrorMessagesHook;
+use MediaWiki\Hook\MakeGlobalVariablesScriptHook;
+use MediaWiki\Output\Hook\BeforePageDisplayHook;
 use MediaWiki\Page\Hook\ArticleFromTitleHook;
 use MediaWiki\SpecialPage\Hook\SpecialPageBeforeExecuteHook;
 use MediaWiki\User\UserNameUtils;
@@ -15,7 +17,9 @@ class Hooks implements
 	ArticleFromTitleHook,
 	LoginFormValidErrorMessagesHook,
 	SpecialPageBeforeExecuteHook,
-	TalkPageLinkResolveHook
+	TalkPageLinkResolveHook,
+	BeforePageDisplayHook,
+	MakeGlobalVariablesScriptHook
 {
 	private UserNameUtils $userNameUtils;
 	private ProfileRenderer $renderer;
@@ -70,5 +74,34 @@ class Hooks implements
 		}
 
 		$linkAttributes['href'] = $this->discourseAPI->getBaseUrl() . '/tag/' . $cleanTitle;
+	}
+
+	/** @inheritDoc */
+	public function onBeforePageDisplay( $out, $skin ): void {
+		if ($this->hasArticleTalk($skin)) {
+			$out->addModules( [ 'ext.discourse.articleTalk.scripts' ] );
+			$out->addModuleStyles( [ 'ext.discourse.articleTalk.styles' ] );
+		}
+	}
+
+	/** @inheritDoc */
+	public function onMakeGlobalVariablesScript(&$vars, $out): void {
+		$title = $out->getTitle();
+
+		$vars["DiscourseBaseUrl"] = $this->discourseAPI->getBaseUrl();
+		$vars["DiscoursePageTag"] = $this->discourseAPI->sanitizePageTitle($title);
+	}
+
+	private function hasArticleTalk( $skin ): bool {
+		$title = $skin->getTitle();
+		$action = $skin->getRequest()->getRawVal( 'action' ) ?? 'view';
+
+		$sanitizedTitle = $this->discourseAPI->sanitizePageTitle($title);
+
+		return $title->inNamespace( NS_MAIN ) &&
+			$action === 'view' &&
+			!$title->isMainPage() &&
+			$title->exists() &&
+			$sanitizedTitle !== null;
 	}
 }

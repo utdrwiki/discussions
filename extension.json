@@ -55,6 +55,8 @@
 		"LoginFormValidErrorMessages": "main",
 		"SpecialPageBeforeExecute": "main",
 		"TalkPageLinkResolve": "main",
+		"BeforePageDisplay": "main",
+		"MakeGlobalVariablesScript": "main",
 		"BeforeCreateEchoEvent": "echo"
 	},
 	"HookHandlers": {
@@ -72,6 +74,36 @@
 		}
 	},
 	"ResourceModules": {
+		"ext.discourse.articleTalk.icons": {
+			"selectorWithVariant": ".discourse-icon.mw-ui-icon-wikimedia-{name}-{variant}",
+			"selectorWithoutVariant": ".discourse-icon.mw-ui-icon-wikimedia-{name}",
+			"useDataURI": false,
+			"defaultColor": "#000",
+			"class": "MediaWiki\\ResourceLoader\\OOUIIconPackModule",
+			"useMaskImage": true,
+			"icons": [
+				"eye",
+				"heart",
+				"speechBubble"
+			]
+		},
+		"ext.discourse.articleTalk.scripts": {
+			"scripts": [
+				"ext.discourse.articleTalk.js"
+			],
+			"messages": [
+				"article-discourse-related-talk-header",
+				"article-discourse-related-talk-new-post"
+			],
+			"dependencies": [
+				"ext.discourse.articleTalk.icons"
+			]
+		},
+		"ext.discourse.articleTalk.styles": {
+			"styles": [
+				"ext.discourse.articleTalk.less"
+			]
+		},
 		"ext.discourse.profile.scripts": {
 			"scripts": [
 				"ext.discourse.profile.js"
