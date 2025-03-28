@@ -57,12 +57,13 @@ class ProfileRenderer {
 		$defaultAvatarColor = $config->get( 'DiscourseDefaultAvatarColor' );
 		try {
 			$data = $this->api->makeRequest( "/users/by-external/{$user->getId()}.json" );;
+			$discourseUsername = urlencode($data['user']['username']);
 			return [
 				'avatar' => str_replace( '{size}', '144', $data['user']['avatar_template'] ),
 				'bio' => $data['user']['bio_cooked'] ?? '',
 				'name' => $data['user']['name'] ?? '',
 				'posts' => $data['user']['post_count'],
-				'postsUrl' => "$baseUrl/u/$username/activity",
+				'postsUrl' => "$baseUrl/u/$discourseUsername/activity",
 				'website' => $data['user']['website'] ?? '',
 			];
 		} catch ( ClientException $ex ) {
