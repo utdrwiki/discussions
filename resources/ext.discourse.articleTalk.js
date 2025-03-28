@@ -43,7 +43,7 @@ function buildNewPostButton(tag) {
 
 	link.innerHTML = `
 		<span class="vector-icon mw-ui-icon-add-progressive mw-ui-icon-wikimedia-add-progressive"></span>
-		<span>${mw.msg('article-discourse-related-talk-new-post')}</span>
+		<span>${mw.message('article-discourse-related-talk-new-post').escaped()}</span>
 	`;
 
 	return link;
@@ -91,7 +91,7 @@ function buildPostsContainer(tag) {
 	container.innerHTML = `
 		<aside class="noprint">
 			<div class="article-talk-container-header-container">
-				<h2 class="article-talk-container-header">${mw.msg('article-discourse-related-talk-header')}</h2>
+				<h2 class="article-talk-container-header">${mw.message('article-discourse-related-talk-header').escaped()}</h2>
 				${buildNewPostButton(tag).outerHTML}
 			</div>
 			<ul class="article-talk-container-card-list" id="article-talk-posts-list"></ul>
