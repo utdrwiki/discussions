@@ -26,6 +26,7 @@
 	"discourse-profile-link-talk": "Talk",
 	"discourse-profile-link-contributions": "Edits",
 	"discourse-profile-link-posts": "Posts",
+	"discourse-profile-edit-button": "Edit Profile",
 	"echo-category-title-discourse": "Discussions",
 	"echo-pref-tooltip-discourse": "Notify me on Discussions events",
 	"notification-discourse-topic": "Topic",

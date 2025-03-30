@@ -6,6 +6,7 @@
 		"avatar header"
 		"avatar stats"
 		"avatar bio"
+		"blank edit"
 		"tabs tabs";
 	grid-template-columns: 160px auto;
 
@@ -77,6 +78,33 @@
 		
 		.discourse-profile-link {
 			padding: 10px;
+		}
+	}
+
+	.discourse-profile-edit-button {
+		grid-area: edit;
+
+		a {
+			display: flex;
+			flex-wrap: nowarp;
+
+			color: @color-progressive;
+
+			@media (max-width: @max-width-breakpoint-mobile) {
+				justify-content: center;
+			}
+
+			&:hover {
+				color: @color-progressive--hover;
+
+				.vector-icon {
+					background-color: @color-progressive--hover;
+				}
+			}
+
+			.vector-icon {
+				background-color: @color-progressive;
+			}
 		}
 	}
 }

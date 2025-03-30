@@ -64,6 +64,7 @@ class ProfileRenderer {
 				'name' => $data['user']['name'] ?? '',
 				'posts' => $data['user']['post_count'],
 				'postsUrl' => "$baseUrl/u/$discourseUsername/activity",
+				'editUrl' => "$baseUrl/u/$discourseUsername/preferences/profile",
 				'website' => $data['user']['website'] ?? '',
 			];
 		} catch ( ClientException $ex ) {
@@ -76,6 +77,7 @@ class ProfileRenderer {
 					'name' => '',
 					'posts' => 0,
 					'postsUrl' => null,
+					'editUrl' => null,
 					'website' => '',
 				];
 			}
@@ -96,6 +98,7 @@ class ProfileRenderer {
 	}
 
 	private function getProfileDataCached( User $user, Config $config ): ?array {
+		return $this->getProfileData($user, $config);
 		return $this->cache->getWithSetCallback(
 			$this->cache->makeGlobalKey( 'DiscourseProfile', $user->getId() ),
 			$this->cache::TTL_HOUR,
@@ -165,6 +168,27 @@ class ProfileRenderer {
 		], $profileData['bio'] );
 	}
 
+	private function makeEditButton(array $profileData, OutputPage $out): string {
+		if (!$profileData['editUrl']) {
+			return '';
+		}
+
+		$icon = Html::element('span', [
+			'class' => 'vector-icon mw-ui-icon-wikimedia-edit mw-ui-icon-wikimedia-wikimedia-edit'
+		]);
+		$spanText = $out->msg('discourse-profile-edit-button')->text();
+		$span = Html::rawElement('span', [
+			'class' => 'cdx-button'
+		],  "$icon$spanText");
+		$link = Html::rawElement('a', [
+			'href' => $profileData['editUrl'],
+		], $span);
+
+		return Html::rawElement('div', [
+			'class' => 'discourse-profile-edit-button'
+		], $link);
+	}
+
 	private function makeTabs( User $user, array $profileData, OutputPage $out ): string {
 		$links = [
 			'user' => $user->getUserPage()->getFullURL(),
@@ -183,9 +207,10 @@ class ProfileRenderer {
 		$stats = $this->makeStats( $user, $profileData, $out );
 		$bio = $this->makeBio( $profileData );
 		$tabs = $this->makeTabs( $user, $profileData, $out );
+		$edit = $user->getId() === $out->getUser()->getId() ? $this->makeEditButton($profileData, $out) : "";
 		return Html::rawElement( 'div', [
 			'class' => 'discourse-profile'
-		], "$header$avatar$stats$bio$tabs" );
+		], "$header$avatar$stats$bio$edit$tabs" );
 	}
 
 	private function makeNoProfileError( OutputPage $out ): string {
