@@ -23,6 +23,7 @@
 	"discourse-profile-edits": "$1 edits",
 	"discourse-profile-posts": "$1 posts",
 	"discourse-profile-link-user": "About",
+	"discourse-profile-link-talk": "Talk",
 	"discourse-profile-link-contributions": "Edits",
 	"discourse-profile-link-posts": "Posts",
 	"echo-category-title-discourse": "Discussions",

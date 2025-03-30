@@ -168,6 +168,7 @@ class ProfileRenderer {
 	private function makeTabs( User $user, array $profileData, OutputPage $out ): string {
 		$links = [
 			'user' => $user->getUserPage()->getFullURL(),
+			'talk' => $user->getTalkPage()->getFullURL(),
 			'contributions' => SpecialPage::getTitleFor( 'Contributions', $user->getName() )->getFullURL(),
 		];
 		if ( $profileData['postsUrl'] !== null ) {
