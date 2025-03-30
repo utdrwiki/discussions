@@ -42,6 +42,8 @@
 				margin-left: 0;
 			}
 		}
+
+		margin-bottom: 5px;
 	}
 	
 	.discourse-profile-avatar {
@@ -87,16 +89,13 @@
 
 	.discourse-profile-edit-button {
 		grid-area: edit;
+		margin-top: 10px;
 
 		a {
 			display: flex;
 			flex-wrap: nowarp;
 
 			color: @color-progressive;
-
-			@media (max-width: @max-width-breakpoint-mobile) {
-				justify-content: center;
-			}
 
 			&:hover {
 				color: @color-progressive--hover;
@@ -140,6 +139,8 @@
 			flex-direction: column;
 			justify-content: center;
 
+			margin-bottom: 0;
+
 			.discourse-profile-group {
 				margin-top: 10px;
 				margin-left: 0;
@@ -151,6 +152,12 @@
 
 			.discourse-profile-name {
 				margin-left: 0;
+			}
+		}
+
+		.discourse-profile-edit-button {
+			a {
+				justify-content: center;
 			}
 		}
 
