@@ -37,6 +37,10 @@
 			padding: 3px 8px;
 			font-size: 12px;
 			font-weight: bold;
+
+			@media (max-width: @max-width-breakpoint-mobile) {
+				margin-left: 0;
+			}
 		}
 	}
 	
@@ -138,6 +142,15 @@
 
 			.discourse-profile-group {
 				margin-top: 10px;
+				margin-left: 0;
+
+				&:last-child {
+					margin-bottom: 10px;
+				}
+			}
+
+			.discourse-profile-name {
+				margin-left: 0;
 			}
 		}
 
