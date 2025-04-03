@@ -64,7 +64,6 @@ class ProfileRenderer {
 				'name' => $data['user']['name'] ?? '',
 				'posts' => $data['user']['post_count'],
 				'postsUrl' => "$baseUrl/u/$discourseUsername/activity",
-				'editUrl' => "$baseUrl/u/$discourseUsername/preferences/profile",
 				'website' => $data['user']['website'] ?? '',
 			];
 		} catch ( ClientException $ex ) {
@@ -77,7 +76,6 @@ class ProfileRenderer {
 					'name' => '',
 					'posts' => 0,
 					'postsUrl' => null,
-					'editUrl' => null,
 					'website' => '',
 				];
 			}
@@ -167,11 +165,7 @@ class ProfileRenderer {
 		], $profileData['bio'] );
 	}
 
-	private function makeEditButton(array $profileData, OutputPage $out): string {
-		if (!$profileData['editUrl']) {
-			return '';
-		}
-
+	private function makeEditButton( array $profileData, OutputPage $out, string $baseUrl ): string {
 		$icon = Html::element('span', [
 			'class' => 'vector-icon mw-ui-icon-wikimedia-edit mw-ui-icon-wikimedia-wikimedia-edit'
 		]);
@@ -180,7 +174,7 @@ class ProfileRenderer {
 			'class' => 'cdx-button'
 		],  "$icon$spanText");
 		$link = Html::rawElement('a', [
-			'href' => $profileData['editUrl'],
+			'href' => "$baseUrl/my/preferences/profile",
 		], $span);
 
 		return Html::rawElement('div', [
@@ -200,13 +194,13 @@ class ProfileRenderer {
 		return $this->makeLinkList( $links, 'discourse-profile-tabs', $out );
 	}
 
-	private function makeProfile( User $user, array $profileData, OutputPage $out ): string {
+	private function makeProfile( User $user, array $profileData, OutputPage $out, string $baseUrl ): string {
 		$header = $this->makeProfileHeader( $user, $profileData, $out );
 		$avatar = $this->makeAvatar( $user, $profileData, $out );
 		$stats = $this->makeStats( $user, $profileData, $out );
 		$bio = $this->makeBio( $profileData );
 		$tabs = $this->makeTabs( $user, $profileData, $out );
-		$edit = $user->getId() === $out->getUser()->getId() ? $this->makeEditButton($profileData, $out) : "";
+		$edit = $user->getId() === $out->getUser()->getId() ? $this->makeEditButton( $profileData, $out, $baseUrl ) : "";
 		return Html::rawElement( 'div', [
 			'class' => 'discourse-profile'
 		], "$header$avatar$stats$bio$edit$tabs" );
@@ -231,7 +225,8 @@ class ProfileRenderer {
 			return;
 		}
 
-		$out->addHTML( $this->makeProfile( $user, $profileData, $out ) );
+		$baseUrl = $config->get( 'DiscourseBaseUrl' );
+		$out->addHTML( $this->makeProfile( $user, $profileData, $out, $baseUrl ) );
 		$out->addModules( 'ext.discourse.profile.scripts' );
 		$out->addModuleStyles( 'ext.discourse.profile.styles' );
 	}
