@@ -1,7 +1,7 @@
 <p align="center"><a href="https://github.com/utdrwiki/discussions/releases/latest" alt="Latest Release">
 <img src="https://img.shields.io/github/v/release/utdrwiki/discussions"/></a></p>
 
-<div align="center"><h1>📰 Discourse</h1></div>
+<div align="center"><h1>🗯️ Discourse</h1></div>
 
 **Discourse** is an in-development MediaWiki extension that acts as a compatibility layer between Discourse and MediaWiki. It is unstable for production use outside of the Undertale Wiki and Deltarune Wiki environment.
 
