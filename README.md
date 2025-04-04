@@ -9,6 +9,9 @@
 - Allows every wiki user to have a Discourse account, it uses wiki accounts in-place of separate Discourse accounts.
 - It adds an area for Discourse profile elements to the top of every page related to user actions, this includes user pages (`User:Example`), user talk pages (`User_talk:Example`) and user contribution pages (`Special:Contributions/Example`).
 - It adds a users Discourse avatar, their wiki edit count and the amount of Discourse posts they've made, along with related user page links at the bottom of the Discourse profile element, these links go to each persons `Special:Contributions` entry, `User_talk` page and to their Discourse posts page.
+- Replaces talk page links for redirects to Discourse tag categories for a respective page title.
+- Shows a list of post previews that are relevant to the current page.
+- A maintenance script that syncs Discourse tags with qualifying (mainspace, no sub-pages) articles on the wiki.
 - Has the option to combine user groups from Discourse and MediaWiki together, eliminating the need to manually promote staff members through Discourse and MediaWiki.
 
 ## Installation
