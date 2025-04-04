@@ -6,9 +6,9 @@
 **Discourse** is an in-development MediaWiki extension that acts as a compatibility layer between Discourse and MediaWiki. It is unstable for production use outside of the Undertale Wiki and Deltarune Wiki environment.
 
 ## Features
-- Adds Discourse profile elements to the top of every user page for a registered user, this includes a users Discourse avatar, their wiki edit count and the amount of Discourse posts they've made.
-- It also adds links under the Discourse social profile element, these links go to each persons `Special:Contributions` entry, `User_talk` page and to their Discourse posts page.
 - Allows every wiki user to have a Discourse account, it uses wiki accounts in-place of separate Discourse accounts.
+- It adds an area for Discourse profile elements to the top of every page related to user actions, this includes user pages (`User:Example`), user talk pages (`User_talk:Example`) and user contribution pages (`Special:Contributions/Example`).
+- It adds a users Discourse avatar, their wiki edit count and the amount of Discourse posts they've made, along with related user page links at the bottom of the Discourse profile element, these links go to each persons `Special:Contributions` entry, `User_talk` page and to their Discourse posts page.
 - Has the option to combine user groups from Discourse and MediaWiki together, eliminating the need to manually promote staff members through Discourse and MediaWiki.
 
 ## Installation
