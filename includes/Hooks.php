@@ -55,7 +55,7 @@ class Hooks implements
 			$special->getName() === 'Contributions' &&
 			$subPage !== '' &&
 			$subPage !== null &&
-			$this->userNameUtils->isUsable( $subPage )
+			($this->userNameUtils->isUsable( $subPage ) || $this->userNameUtils->isTemp( str_replace( '_', ' ', $subPage ) ))
 		) {
 			$this->renderer->render( $subPage, $special->getContext() );
 		}
