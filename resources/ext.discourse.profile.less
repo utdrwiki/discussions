@@ -52,12 +52,25 @@
 		grid-area: avatar;
 		justify-content: center;
 		width: 144px;
+
+		&.discourse-unregistered-profile-avatar {
+			height: 144px;
+			object-fit: contain;
+			image-rendering: pixelated;
+		}
 	}
-	
+
 	.discourse-profile-bio {
 		grid-area: bio;
-		max-height: 300px;
+		max-height: 350px;
 		overflow: auto;
+
+		.cdx-message {
+			margin-top: 12px;
+
+			// Results in a border box size of 350px, which is the full width of the inner content of the body on a 375px width viewport (iPhone SE)
+			min-width: 316px;
+		}
 	}
 	
 	.discourse-profile-stats {
@@ -69,7 +82,7 @@
 		margin: 0;
 		text-transform: uppercase;
 		
-		.discourse-profile-edits::after {
+		.discourse-profile-edits:not(:last-child)::after {
 			content: "·";
 			padding: 0 12px;
 		}

@@ -27,6 +27,7 @@
 	"discourse-profile-link-contributions": "Edits",
 	"discourse-profile-link-posts": "Posts",
 	"discourse-profile-edit-button": "Edit Profile",
+	"discourse-profile-unregistered-bio": "This is a [[{{int:grouppage-temp}}|temporary user]], created when an edit is made without a registered account. A temporary user's edits can be reclaimed for up to 3 months by [[Special:CreateAccount|creating an account]]. After a temporary user's session expires, a new one is automatically created following their next edit. Temporary users cannot participate in Discussions or upload files.",
 	"echo-category-title-discourse": "Discussions",
 	"echo-pref-tooltip-discourse": "Notify me on Discussions events",
 	"notification-discourse-topic": "Topic",

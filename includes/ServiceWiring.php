@@ -13,6 +13,7 @@ return [
 			$services->getService( 'DiscourseAPIService' ),
 			$services->getMainWANObjectCache(),
 			LoggerFactory::getInstance( 'Discourse' ),
+			$services->getRepoGroup()->getLocalRepo(),
 		);
 	},
 	'DiscourseAPIService' => static function ( MediaWikiServices $services ) {
