@@ -78,6 +78,7 @@ class ProfileRenderer {
 				'posts' => $data['user']['post_count'],
 				'postsUrl' => "$baseUrl/u/$discourseUsername/activity",
 				'website' => $data['user']['website'] ?? '',
+				'badges' => $data['badges'] ?? [],
 			];
 		} catch ( ClientException $ex ) {
 			$response = $ex->getResponse();
@@ -159,6 +160,30 @@ class ProfileRenderer {
 		return $fileSrc;
 	}
 
+	private function makeBadge( array $badgeData ): string {
+		$baseUrl = $this->api->getBaseUrl();
+
+		$badgeImg = Html::rawElement('img', [
+			'class' => 'discourse-profile-badge-img',
+			'src' => $badgeData['image_url'],
+			'alt' => $badgeData['name'],
+			'height' => '25'
+		]);
+
+		$badgeId = $badgeData['id'];
+		$badgeSlug = $badgeData['slug'];
+
+		$badgeLink = Html::rawElement('a', [
+			'class' => 'discourse-profile-badge-link',
+			'href' => "$baseUrl/badges/$badgeId/$badgeSlug",
+			'title' => $badgeData['name'],
+		], $badgeImg);
+
+		return Html::rawElement('span', [
+			'class' => 'discourse-profile-badge',
+		], $badgeLink);;
+	}
+
 	private function makeProfileHeader( User $user, ?array $profileData, OutputPage $out ): string {
 		$profileTitle = Html::element( 'h1', [
 			'class' => 'discourse-profile-username'
@@ -187,9 +212,21 @@ class ProfileRenderer {
 			], $out->msg( 'discourse-profile-blocked' )->text() );
 		}
 		$tagsString = implode( $tags );
+
+		$badges = [];
+		foreach ( $profileData['badges'] as $badge ) {
+			if (!$badge['enabled'] || !$badge['image_url']) {
+				continue;
+			}
+			$badges[] = $this->makeBadge( $badge );
+		}
+		$badgeList = sizeof($badges) > 0 ? Html::rawElement('div', [
+			'class' => 'discourse-profile-badges',
+		], implode( $badges ) ) : '';
+
 		return Html::rawElement( 'div', [
 			'class' => 'discourse-profile-header'
-		], "$profileTitle$tagsString" );
+		], "$profileTitle$tagsString$badgeList" );
 	}
 
 	private function makeAvatar( User $user, ?array $profileData, OutputPage $out, Config $config ): string {
