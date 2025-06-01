@@ -63,17 +63,18 @@ class Hooks implements
 
 	/** @inheritDoc */
 	public function onTalkPageLinkResolve(array &$linkAttributes): void {
-		if ($linkAttributes['ns'] !== NS_MAIN) {
+		if ( $linkAttributes['ns'] !== NS_MAIN ) {
 			return;
 		}
 
 		$cleanTitle = $this->discourseAPI->sanitizePageTitle( $linkAttributes['title'] );
 
-		if (!$cleanTitle) {
+		if ( !$cleanTitle ) {
 			return;
 		}
 
 		$linkAttributes['href'] = $this->discourseAPI->getBaseUrl() . '/tag/' . $cleanTitle;
+		unset( $linkAttributes['rel'] );
 	}
 
 	/** @inheritDoc */
