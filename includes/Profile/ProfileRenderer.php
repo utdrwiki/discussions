@@ -91,6 +91,7 @@ class ProfileRenderer {
 					'posts' => 0,
 					'postsUrl' => null,
 					'website' => '',
+					'badges' => [],
 				];
 			}
 			$this->logger->error( 'Client error when retrieving profile data', [
