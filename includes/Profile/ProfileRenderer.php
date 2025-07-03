@@ -7,16 +7,16 @@ use GuzzleHttp\Exception\GuzzleException;
 use MediaWiki\Config\Config;
 use MediaWiki\Context\RequestContext;
 use MediaWiki\Extension\Discourse\API\DiscourseAPIService;
+use MediaWiki\FileRepo\FileRepo;
 use MediaWiki\Html\Html;
 use MediaWiki\Output\OutputPage;
 use MediaWiki\SpecialPage\SpecialPage;
+use MediaWiki\Title\Title;
 use MediaWiki\User\User;
 use MediaWiki\User\UserGroupManager;
 use MediaWiki\User\UserFactory;
 use Psr\Log\LoggerInterface;
 use Wikimedia\ObjectCache\WANObjectCache;
-use FileRepo;
-use Title;
 
 
 class ProfileRenderer {
