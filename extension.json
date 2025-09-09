@@ -18,7 +18,8 @@
 			"class": "MediaWiki\\Extension\\Discourse\\SpecialPage\\DiscourseConnect",
 			"services": [
 				"PermissionManager",
-				"UserGroupManager"
+				"UserGroupManager",
+				"UserOptionsLookup"
 			]
 		}
 	},
@@ -42,6 +43,9 @@
 		"discourse-admin",
 		"discourse-moderator"
 	],
+	"DefaultUserOptions": {
+		"discourse-lowercase-username": false
+	},
 	"GroupPermissions": {
 		"interface-admin": {
 			"discourse-admin": true
@@ -57,6 +61,7 @@
 		"TalkPageLinkResolve": "main",
 		"BeforePageDisplay": "main",
 		"MakeGlobalVariablesScript": "main",
+		"GetPreferences": "main",
 		"BeforeCreateEchoEvent": "echo"
 	},
 	"HookHandlers": {

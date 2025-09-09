@@ -10,6 +10,7 @@ return [
 		return new ProfileRenderer(
 			$services->getUserFactory(),
 			$services->getUserGroupManager(),
+			$services->getUserOptionsLookup(),
 			$services->getService( 'DiscourseAPIService' ),
 			$services->getMainWANObjectCache(),
 			LoggerFactory::getInstance( 'Discourse' ),

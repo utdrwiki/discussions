@@ -2,14 +2,16 @@
 
 namespace MediaWiki\Extension\Discourse;
 
+use MediaWiki\Context\RequestContext;
 use MediaWiki\Extension\Discourse\API\DiscourseAPIService;
 use MediaWiki\Extension\Discourse\Profile\ProfileRenderer;
 use MediaWiki\Extension\Discourse\Profile\UserProfilePage;
 use MediaWiki\Extension\Discourse\Hooks\TalkPageLinkResolveHook;
 use MediaWiki\Hook\LoginFormValidErrorMessagesHook;
-use MediaWiki\Hook\MakeGlobalVariablesScriptHook;
 use MediaWiki\Output\Hook\BeforePageDisplayHook;
+use MediaWiki\Output\Hook\MakeGlobalVariablesScriptHook;
 use MediaWiki\Page\Hook\ArticleFromTitleHook;
+use MediaWiki\Preferences\Hook\GetPreferencesHook;
 use MediaWiki\SpecialPage\Hook\SpecialPageBeforeExecuteHook;
 use MediaWiki\User\UserNameUtils;
 
@@ -19,6 +21,7 @@ class Hooks implements
 	SpecialPageBeforeExecuteHook,
 	TalkPageLinkResolveHook,
 	BeforePageDisplayHook,
+	GetPreferencesHook,
 	MakeGlobalVariablesScriptHook
 {
 	private UserNameUtils $userNameUtils;
@@ -104,5 +107,20 @@ class Hooks implements
 			!$title->isMainPage() &&
 			$title->exists() &&
 			$sanitizedTitle !== null;
+	}
+
+	/** @inheritDoc */
+	public function onGetPreferences( $user, &$preferences ) {
+		$context = RequestContext::getMain();
+		$preferences['discourse-lowercase-username'] = [
+			'type' => 'toggle',
+			'label-message' => 'discourse-userpref-lowercase-username',
+			'help' => $context->msg(
+				'discourse-userpref-lowercase-username-help',
+				$user->getName(),
+				$context->getLanguage()->lcfirst( $user->getName() ),
+			),
+			'section' => 'editing/discussion',
+		];
 	}
 }

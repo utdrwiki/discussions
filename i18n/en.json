@@ -28,6 +28,8 @@
 	"discourse-profile-link-posts": "Posts",
 	"discourse-profile-edit-button": "Edit Profile",
 	"discourse-profile-unregistered-bio": "This is a [[{{int:grouppage-temp}}|temporary user]], created when an edit is made without a registered account. A temporary user's edits can be reclaimed for up to 3 months by [[Special:CreateAccount|creating an account]]. After a temporary user's session expires, a new one is automatically created following their next edit. Temporary users cannot participate in Discussions or upload files.",
+	"discourse-userpref-lowercase-username": "Lowercase the first letter of my username in Discussions",
+	"discourse-userpref-lowercase-username-help": "Instead of $1, you would be shown as $2. This does not apply to talk pages. You will have to log out and log back into Discussions to apply the change.",
 	"echo-category-title-discourse": "Discussions",
 	"echo-pref-tooltip-discourse": "Notify me on Discussions events",
 	"notification-discourse-topic": "Topic",

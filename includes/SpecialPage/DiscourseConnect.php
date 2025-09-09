@@ -2,24 +2,21 @@
 
 namespace MediaWiki\Extension\Discourse\SpecialPage;
 
-use BadRequestError;
 use MediaWiki\Config\Config;
+use MediaWiki\Exception\BadRequestError;
 use MediaWiki\Permissions\PermissionManager;
 use MediaWiki\SpecialPage\UnlistedSpecialPage;
+use MediaWiki\User\Options\UserOptionsLookup;
 use MediaWiki\User\User;
 use MediaWiki\User\UserGroupManager;
 
 class DiscourseConnect extends UnlistedSpecialPage {
-	private PermissionManager $permissionManager;
-	private UserGroupManager $userGroupManager;
-
 	public function __construct(
-		PermissionManager $permissionManager,
-		UserGroupManager $userGroupManager,
+		private readonly PermissionManager $permissionManager,
+		private readonly UserGroupManager $userGroupManager,
+		private readonly UserOptionsLookup $userOptionsLookup,
 	) {
 		parent::__construct( 'DiscourseConnect' );
-		$this->permissionManager = $permissionManager;
-		$this->userGroupManager = $userGroupManager;
 	}
 
 	/** @inheritDoc */
@@ -86,11 +83,14 @@ class DiscourseConnect extends UnlistedSpecialPage {
 		$isAdmin = $this->permissionManager->userHasRight( $user, 'discourse-admin' );
 		$isModerator = $this->permissionManager->userHasRight( $user, 'discourse-moderator' );
 		$groups = $this->getDiscourseGroups( $config, $user );
+		$isLowercase = $this->userOptionsLookup->getBoolOption( $user, 'discourse-lowercase-username' );
 		return [
 			'nonce' => $payload['nonce'],
 			'email' => $user->getEmail(),
 			'external_id' => $user->getId(),
-			'username' => $user->getName(),
+			'username' =>  $isLowercase ?
+				$this->getLanguage()->lcfirst( $user->getName() ) :
+				$user->getName(),
 			'admin' => $isAdmin ? 'true' : 'false',
 			'moderator' => $isModerator ? 'true' : 'false',
 			'groups' => implode( ',', $groups ),

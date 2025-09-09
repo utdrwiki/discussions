@@ -12,6 +12,7 @@ use MediaWiki\Html\Html;
 use MediaWiki\Output\OutputPage;
 use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\Title\Title;
+use MediaWiki\User\Options\UserOptionsLookup;
 use MediaWiki\User\User;
 use MediaWiki\User\UserGroupManager;
 use MediaWiki\User\UserFactory;
@@ -20,27 +21,15 @@ use Wikimedia\ObjectCache\WANObjectCache;
 
 
 class ProfileRenderer {
-	private UserFactory $userFactory;
-	private UserGroupManager $userGroupManager;
-	private DiscourseAPIService $api;
-	private WANObjectCache $cache;
-	private LoggerInterface $logger;
-	private FileRepo $localRepo;
-
 	public function __construct(
-		UserFactory $userFactory,
-		UserGroupManager $userGroupManager,
-		DiscourseAPIService $api,
-		WANObjectCache $cache,
-		LoggerInterface $logger,
-		FileRepo $localRepo,
+		private readonly UserFactory $userFactory,
+		private readonly UserGroupManager $userGroupManager,
+		private readonly UserOptionsLookup $userOptionsLookup,
+		private readonly DiscourseAPIService $api,
+		private readonly WANObjectCache $cache,
+		private readonly LoggerInterface $logger,
+		private readonly FileRepo $localRepo,
 	) {
-		$this->userFactory = $userFactory;
-		$this->userGroupManager = $userGroupManager;
-		$this->api = $api;
-		$this->cache = $cache;
-		$this->logger = $logger;
-		$this->localRepo = $localRepo;
 	}
 
 	private function makeLinkList( array $links, string $class, OutputPage $output ): string {
@@ -186,9 +175,12 @@ class ProfileRenderer {
 	}
 
 	private function makeProfileHeader( User $user, ?array $profileData, OutputPage $out ): string {
+		$username = $this->userOptionsLookup->getBoolOption( $user, 'discourse-lowercase-username' ) ?
+			$out->getLanguage()->lcfirst( $user->getName() ) :
+			$user->getName();
 		$profileTitle = Html::element( 'h1', [
 			'class' => 'discourse-profile-username'
-		], $user->getName() );
+		], $username );
 
 		if ( $profileData === null ) {
 			return Html::rawElement( 'div', [
