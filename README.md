@@ -39,6 +39,10 @@ Name | Description | Values | Default | Required?
 `$wgDiscourseConnectSecret` | The value you set under Discourse's `discourse_connect_secret` setting. | `string` | `null` | ✔️ Yes
 `$wgDiscourseUnixSocket` | The path to the Unix socket that Discourse is listening on. If Discourse is running on the same host as MediaWiki and using Unix sockets, you can use this option to avoid unnecessary round trips. | `command` | `null` | ❗ No, but recommended if sharing the same host.
 `$wgDiscourseDefaultAvatarColor` | The default color of the avatar background when there is no avatar image available | `integer` | `#FF0000` | ❌ No
-`$wgDiscourseEnableProfile` | Whether to enable the Discourse profile integration. | `integer` | `true` - enable; `false` - disable | ❌ No
+`$wgDiscourseEnableConnect` | Whether to enable logging into Discourse using this wiki. | `bool` | `true` - enable; `false` - disable | ❌ No
+`$wgDiscourseEnableNotify` | Whether to enable the mechanism by which Discourse notifies MediaWiki of events (user notifications, profile changes, etc.). | `bool` | `true` - enable; `false` - disable | ❌ No
+`$wgDiscourseEnableProfile` | Whether to enable the Discourse profile integration. | `bool` | `true` - enable; `false` - disable | ❌ No
+`$wgDiscourseEnableRelatedArticles` | Whether to show related Discourse topics below articles. | `bool` | `true` - enable; `false` - disable | ❌ No
+`$wgDiscourseEnableTalkButton` | Whether to replace the 'Talk' button on articles with a link to the related Discourse tag. | `bool` | `true` - enable; `false` - disable | ❌ No
 `$wgDiscourseGroupMap` | A mapping of MediaWiki groups to Discourse groups and permissions. | `integer` | `true` - enable; `false` - disable | ❌ No
 `$wgDiscourseSuppressWelcomeMessage` | Whether to suppress the Discourse welcome message | `integer` | `true` - enable; `false` - disable | ❌ No

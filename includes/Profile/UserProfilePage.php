@@ -2,21 +2,24 @@
 
 namespace MediaWiki\Extension\Discourse\Profile;
 
-use Article;
+use MediaWiki\Page\Article;
 use MediaWiki\Title\Title;
+use MediaWiki\User\UserFactory;
 
 class UserProfilePage extends Article {
-	private string $username;
-	private ProfileRenderer $renderer;
-
-	public function __construct( Title $title, ProfileRenderer $renderer ) {
-		$this->username = $title->getText();
-		$this->renderer = $renderer;
+	public function __construct(
+		private readonly Title $title,
+		private readonly UserFactory $userFactory,
+		private readonly ProfileRenderer $renderer,
+	) {
 		parent::__construct( $title );
 	}
 
 	public function view(): void {
-		$this->renderer->render( $this->username, $this->getContext() );
+		$user = $this->userFactory->newFromName( $this->title->getText() );
+		if ( $user && !$user->isAnon() ) {
+			$this->renderer->render( $user, $this->getContext() );
+		}
 		parent::view();
 	}
 }

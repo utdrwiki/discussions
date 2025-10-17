@@ -2,8 +2,8 @@
 
 namespace MediaWiki\Extension\Discourse\SpecialPage;
 
-use MediaWiki\Config\Config;
 use MediaWiki\Exception\BadRequestError;
+use MediaWiki\Extension\Discourse\ExtensionConfig;
 use MediaWiki\Permissions\PermissionManager;
 use MediaWiki\SpecialPage\UnlistedSpecialPage;
 use MediaWiki\User\Options\UserOptionsLookup;
@@ -15,6 +15,7 @@ class DiscourseConnect extends UnlistedSpecialPage {
 		private readonly PermissionManager $permissionManager,
 		private readonly UserGroupManager $userGroupManager,
 		private readonly UserOptionsLookup $userOptionsLookup,
+		private readonly ExtensionConfig $config,
 	) {
 		parent::__construct( 'DiscourseConnect' );
 	}
@@ -34,14 +35,14 @@ class DiscourseConnect extends UnlistedSpecialPage {
 		}
 	}
 
-	private function validatePayload( Config $config ): array {
+	private function validatePayload(): array {
 		$req = $this->getRequest();
 		$payload = $req->getRawVal( 'sso' );
 		$signature = $req->getRawVal( 'sig' );
 		if ( $payload === null || $signature === null ) {
 			throw new BadRequestError( 'discourse-connect-bad-request', 'discourse-connect-missing-params' );
 		}
-		$secret = $config->get( 'DiscourseConnectSecret' );
+		$secret = $this->config->getConnectSecret();
 		if ( $secret === false ) {
 			throw new BadRequestError( 'discourse-connect-bad-request', 'discourse-connect-missing-secret' );
 		}
@@ -61,8 +62,8 @@ class DiscourseConnect extends UnlistedSpecialPage {
 		return $payloadParams;
 	}
 
-	private function getDiscourseGroups( Config $config, User $user ): array {
-		$groupMap = $config->get( 'DiscourseGroupMap' );
+	private function getDiscourseGroups( User $user ): array {
+		$groupMap = $this->config->getGroupMap();
 		if ( $groupMap === null ) {
 			return [];
 		}
@@ -79,10 +80,10 @@ class DiscourseConnect extends UnlistedSpecialPage {
 		return array_keys( $groupSet );
 	}
 
-	private function getLoginPayload( Config $config, User $user, array $payload ): array {
+	private function getLoginPayload( User $user, array $payload ): array {
 		$isAdmin = $this->permissionManager->userHasRight( $user, 'discourse-admin' );
 		$isModerator = $this->permissionManager->userHasRight( $user, 'discourse-moderator' );
-		$groups = $this->getDiscourseGroups( $config, $user );
+		$groups = $this->getDiscourseGroups($user );
 		$isLowercase = $this->userOptionsLookup->getBoolOption( $user, 'discourse-lowercase-username' );
 		return [
 			'nonce' => $payload['nonce'],
@@ -94,13 +95,13 @@ class DiscourseConnect extends UnlistedSpecialPage {
 			'admin' => $isAdmin ? 'true' : 'false',
 			'moderator' => $isModerator ? 'true' : 'false',
 			'groups' => implode( ',', $groups ),
-			'suppress_welcome_message' => $config->get( 'DiscourseSuppressWelcomeMessage' ) ? 'true' : 'false',
+			'suppress_welcome_message' => $this->config->isWelcomeMessageSuppressed() ? 'true' : 'false',
 		];
 	}
 
-	private function getLoginUrlFromPayload( Config $config, string $returnUrl, array $payload ): string {
+	private function getLoginUrlFromPayload( string $returnUrl, array $payload ): string {
 		$encodedPayload = base64_encode( http_build_query( $payload ) );
-		$signature = hash_hmac( 'sha256', $encodedPayload, $config->get( 'DiscourseConnectSecret' ) );
+		$signature = hash_hmac( 'sha256', $encodedPayload, $this->config->getConnectSecret() );
 		return $returnUrl . '?' . http_build_query( [
 			'sso' => $encodedPayload,
 			'sig' => $signature,
@@ -110,13 +111,15 @@ class DiscourseConnect extends UnlistedSpecialPage {
 	/** @inheritDoc */
 	public function execute( $subpage ): void {
 		parent::execute( $subpage );
-		$config = $this->getConfig();
+		if ( !$this->config->isConnectEnabled() ) {
+			throw new BadRequestError( 'discourse-connect-bad-request', 'discourse-connect-disabled' );
+		}
 		$user = $this->getUser();
 		$this->validateUser( $user );
-		$payload = $this->validatePayload( $config );
-		$loginPayload = $this->getLoginPayload( $config, $user, $payload );
+		$payload = $this->validatePayload();
+		$loginPayload = $this->getLoginPayload( $user, $payload );
 		$returnUrl = $payload['return_sso_url'];
-		$loginUrl = $this->getLoginUrlFromPayload( $config, $returnUrl, $loginPayload );
+		$loginUrl = $this->getLoginUrlFromPayload( $returnUrl, $loginPayload );
 		$this->getOutput()->redirect( $loginUrl );
 	}
 }

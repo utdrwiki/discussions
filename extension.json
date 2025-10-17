@@ -19,7 +19,8 @@
 			"services": [
 				"PermissionManager",
 				"UserGroupManager",
-				"UserOptionsLookup"
+				"UserOptionsLookup",
+				"DiscourseConfig"
 			]
 		}
 	},
@@ -32,7 +33,8 @@
 			"services": [
 				"UserFactory",
 				"MainWANObjectCache",
-				"ExtensionRegistry"
+				"ExtensionRegistry",
+				"DiscourseConfig"
 			]
 		}
 	},
@@ -68,9 +70,10 @@
 		"main": {
 			"class": "MediaWiki\\Extension\\Discourse\\Hooks",
 			"services": [
-				"UserNameUtils",
+				"UserFactory",
 				"DiscourseProfileRenderer",
-				"DiscourseAPIService"
+				"DiscourseAPIService",
+				"DiscourseConfig"
 			]
 		},
 		"echo": {
@@ -154,8 +157,28 @@
 			"value": "FF0000",
 			"public": true
 		},
+		"EnableConnect": {
+			"description": "Whether to enable logging into Discourse using this wiki",
+			"value": true,
+			"public": true
+		},
+		"EnableNotify": {
+			"description": "Whether to enable the mechanism by which Discourse notifies MediaWiki of events (user notifications, profile changes, etc.)",
+			"value": true,
+			"public": true
+		},
 		"EnableProfile": {
 			"description": "Whether to enable the Discourse profile integration",
+			"value": true,
+			"public": true
+		},
+		"EnableRelatedArticles": {
+			"description": "Whether to show related Discourse topics below articles",
+			"value": true,
+			"public": true
+		},
+		"EnableTalkButton": {
+			"description": "Whether to replace the 'Talk' button on articles with a link to the related Discourse tag",
 			"value": true,
 			"public": true
 		},

@@ -4,32 +4,36 @@ namespace MediaWiki\Extension\Discourse\Profile;
 
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
-use MediaWiki\Config\Config;
 use MediaWiki\Context\RequestContext;
 use MediaWiki\Extension\Discourse\API\DiscourseAPIService;
+use MediaWiki\Extension\Discourse\ExtensionConfig;
 use MediaWiki\FileRepo\FileRepo;
 use MediaWiki\Html\Html;
 use MediaWiki\Output\OutputPage;
 use MediaWiki\SpecialPage\SpecialPage;
-use MediaWiki\Title\Title;
 use MediaWiki\User\Options\UserOptionsLookup;
 use MediaWiki\User\User;
 use MediaWiki\User\UserGroupManager;
-use MediaWiki\User\UserFactory;
 use Psr\Log\LoggerInterface;
 use Wikimedia\ObjectCache\WANObjectCache;
 
 
 class ProfileRenderer {
+	public const SERVICE_NAME = 'DiscourseProfileRenderer';
+	public const CACHE_KEY_PREFIX = 'DiscourseProfile';
 	public function __construct(
-		private readonly UserFactory $userFactory,
 		private readonly UserGroupManager $userGroupManager,
 		private readonly UserOptionsLookup $userOptionsLookup,
 		private readonly DiscourseAPIService $api,
+		private readonly ExtensionConfig $config,
 		private readonly WANObjectCache $cache,
 		private readonly LoggerInterface $logger,
 		private readonly FileRepo $localRepo,
 	) {
+	}
+
+	public static function makeCacheKey( WANObjectCache $cache, int|string $userId ): string {
+		return $cache->makeGlobalKey( self::CACHE_KEY_PREFIX, $userId );
 	}
 
 	private function makeLinkList( array $links, string $class, OutputPage $output ): string {
@@ -46,17 +50,16 @@ class ProfileRenderer {
 		], implode( $list ) );
 	}
 
-	private function getDefaultProfileAvatar( User $user, Config $config ): string {
+	private function getDefaultProfileAvatar( User $user ): string {
 		$username = $user->getName();
-		$baseUrl = $config->get( 'DiscourseBaseUrl' );
-		$defaultAvatarColor = $config->get( 'DiscourseDefaultAvatarColor' );
+		$baseUrl = $this->config->getBaseUrl();
+		$defaultAvatarColor = $this->config->getDefaultAvatarColor();
 
 		return "$baseUrl/letter_avatar_proxy/v4/letter/{$username[0]}/$defaultAvatarColor/144.png";
 	}
 
-	private function getProfileData( User $user, Config $config ): ?array {
+	private function getProfileData( User $user ): ?array {
 		$username = $user->getName();
-		$baseUrl = $config->get( 'DiscourseBaseUrl' );
 		try {
 			$data = $this->api->makeRequest( "/users/by-external/{$user->getId()}.json" );;
 			$discourseUsername = urlencode($data['user']['username']);
@@ -65,7 +68,7 @@ class ProfileRenderer {
 				'bio' => $data['user']['bio_cooked'] ?? '',
 				'name' => $data['user']['name'] ?? '',
 				'posts' => $data['user']['post_count'],
-				'postsUrl' => "$baseUrl/u/$discourseUsername/activity",
+				'postsUrl' => "{$this->config->getBaseUrl()}/u/$discourseUsername/activity",
 				'website' => $data['user']['website'] ?? '',
 				'badges' => $data['badges'] ?? [],
 			];
@@ -74,7 +77,7 @@ class ProfileRenderer {
 			if ( $response->getStatusCode() === 404 ) {
 				// User still hasn't logged into Discourse.
 				return [
-					'avatar' => $this->getDefaultProfileAvatar( $user, $config ),
+					'avatar' => $this->getDefaultProfileAvatar( $user ),
 					'bio' => '',
 					'name' => '',
 					'posts' => 0,
@@ -99,12 +102,12 @@ class ProfileRenderer {
 		}
 	}
 
-	private function getProfileDataCached( User $user, Config $config ): ?array {
+	private function getProfileDataCached( User $user ): ?array {
 		return $this->cache->getWithSetCallback(
-			$this->cache->makeGlobalKey( 'DiscourseProfile', $user->getId() ),
+			self::makeCacheKey( $this->cache, $user->getId() ),
 			$this->cache::TTL_HOUR,
-			function ( $oldValue, &$ttl, array &$setOpts ) use ( $user, $config ) {
-				$profileData = $this->getProfileData( $user, $config );
+			function ( $oldValue, &$ttl, array &$setOpts ) use ( $user ) {
+				$profileData = $this->getProfileData( $user );
 				if ( $profileData === null ) {
 					$ttl = $this->cache::TTL_MINUTE;
 				}
@@ -113,65 +116,58 @@ class ProfileRenderer {
 		);
 	}
 
-	private function getUnregisteredAvatar( User $user, OutputPage $out, Config $config ): string {
-		$avatarText = $out->msg('Profile-unregistered-avatars')->inContentLanguage()->plain();
+	private function getUnregisteredAvatar( User $user, OutputPage $out ): string {
+		$avatarText = $out->msg( 'Profile-unregistered-avatars' )->inContentLanguage()->plain();
 
-		if (!$avatarText) {
-			return $this->getDefaultProfileAvatar( $user, $config );
+		if ( !$avatarText ) {
+			return $this->getDefaultProfileAvatar( $user );
 		}
 
-		$avatarTextLines = explode("\n", trim($avatarText));
+		$avatarTextLines = explode( '\n', trim( $avatarText ) );
 
-		$userHash = md5($user->getName());
+		$userHash = md5( $user->getName() );
 		// 4 bytes seems like plenty
-		$avatarIndex = hexdec(substr($userHash, 0, 8)) % sizeof($avatarTextLines);
+		$avatarIndex = hexdec( substr( $userHash, 0, 8 ) ) % sizeof( $avatarTextLines );
 		$avatarTextLine = $avatarTextLines[$avatarIndex];
 
 		$matches = [];
-		preg_match('/^[#*]?\s*(?:\[\[\s*:?\s*File:\s*)?([^\]|]*)/m', $avatarTextLine, $matches);
+		preg_match( '/^[#*]?\s*(?:\[\[\s*:?\s*File:\s*)?([^\]|]*)/m', $avatarTextLine, $matches );
 		$avatarFileName = $matches[1];
 
-		if (!$avatarFileName) {
-			return $this->getDefaultProfileAvatar( $user, $config );
+		if ( !$avatarFileName ) {
+			return $this->getDefaultProfileAvatar( $user );
 		}
 
-		$title = Title::newFromText( "File:$avatarFileName" );
-		if (!$title->exists()) {
-			return $this->getDefaultProfileAvatar( $user, $config );
+		$file = $this->localRepo->findFile( $avatarFileName );
+		if ( !$file ) {
+			return $this->getDefaultProfileAvatar( $user );
 		}
 
-		$file = $this->localRepo->findFile( $title );
-		if (!$file) {
-			return $this->getDefaultProfileAvatar( $user, $config );
-		}
-
-		$fileSrc = $file->getFullURL();
-
-		return $fileSrc;
+		return $file->getFullURL();
 	}
 
 	private function makeBadge( array $badgeData ): string {
-		$baseUrl = $this->api->getBaseUrl();
+		$baseUrl = $this->config->getBaseUrl();
 
-		$badgeImg = Html::rawElement('img', [
+		$badgeImg = Html::rawElement( 'img', [
 			'class' => 'discourse-profile-badge-img',
 			'src' => $badgeData['image_url'],
 			'alt' => $badgeData['name'],
 			'height' => '25'
-		]);
+		] );
 
 		$badgeId = $badgeData['id'];
 		$badgeSlug = $badgeData['slug'];
 
-		$badgeLink = Html::rawElement('a', [
+		$badgeLink = Html::rawElement( 'a', [
 			'class' => 'discourse-profile-badge-link',
 			'href' => "$baseUrl/badges/$badgeId/$badgeSlug",
 			'title' => $badgeData['name'],
-		], $badgeImg);
+		], $badgeImg );
 
-		return Html::rawElement('span', [
+		return Html::rawElement( 'span', [
 			'class' => 'discourse-profile-badge',
-		], $badgeLink);;
+		], $badgeLink );
 	}
 
 	private function makeProfileHeader( User $user, ?array $profileData, OutputPage $out ): string {
@@ -222,12 +218,12 @@ class ProfileRenderer {
 		], "$profileTitle$tagsString$badgeList" );
 	}
 
-	private function makeAvatar( User $user, ?array $profileData, OutputPage $out, Config $config ): string {
-		$imgSrc = $profileData ? $profileData['avatar'] : $this->getUnregisteredAvatar( $user, $out, $config );
+	private function makeAvatar( User $user, ?array $profileData, OutputPage $out ): string {
+		$imgSrc = $profileData ? $profileData['avatar'] : $this->getUnregisteredAvatar( $user, $out );
 
 		return Html::element( 'img', [
-      'alt' => $out->msg( 'discourse-profile-avatar-alt', $user->getName() )->text(),
-			'class' => 'discourse-profile-avatar' . ($profileData === '' ? '' : ' discourse-unregistered-profile-avatar'),
+			'alt' => $out->msg( 'discourse-profile-avatar-alt', $user->getName() )->text(),
+			'class' => 'discourse-profile-avatar' . ( $profileData === '' ? '' : ' discourse-unregistered-profile-avatar' ),
 			'src' => $imgSrc
 		] );
 	}
@@ -278,8 +274,8 @@ class ProfileRenderer {
 		], $profileData['bio'] );
 	}
 
-	private function makeEditButton( ?array $profileData, OutputPage $out, string $baseUrl ): string {
-		if (!$profileData) {
+	private function makeEditButton( ?array $profileData, OutputPage $out ): string {
+		if ( !$profileData ) {
 			return "";
 		}
 
@@ -291,7 +287,7 @@ class ProfileRenderer {
 			'class' => 'cdx-button'
 		],  "$icon$spanText" );
 		$link = Html::rawElement('a', [
-			'href' => "$baseUrl/my/preferences/profile",
+			'href' => "{$this->config->getBaseUrl()}/my/preferences/profile",
 		], $span );
 
 		return Html::rawElement('div', [
@@ -311,15 +307,15 @@ class ProfileRenderer {
 		return $this->makeLinkList( $links, 'discourse-profile-tabs', $out );
 	}
 
-	private function makeProfile( User $user, ?array $profileData, OutputPage $out, Config $config ): string {
-		$baseUrl = $config->get( 'DiscourseBaseUrl' );
-
+	private function makeProfile( User $user, ?array $profileData, OutputPage $out ): string {
 		$header = $this->makeProfileHeader( $user, $profileData, $out );
-		$avatar = $this->makeAvatar( $user, $profileData, $out, $config );
+		$avatar = $this->makeAvatar( $user, $profileData, $out );
 		$stats = $this->makeStats( $user, $profileData, $out );
 		$bio = $this->makeBio( $profileData, $out );
 		$tabs = $this->makeTabs( $user, $profileData, $out );
-		$edit = $user->getId() === $out->getUser()->getId() ? $this->makeEditButton( $profileData, $out, $baseUrl ) : "";
+		$edit = $user->getId() === $out->getUser()->getId() ?
+			$this->makeEditButton( $profileData, $out ) :
+			'';
 		return Html::rawElement( 'div', [
 			'class' => 'discourse-profile'
 		], "$header$avatar$stats$bio$edit$tabs" );
@@ -329,16 +325,12 @@ class ProfileRenderer {
 		return Html::errorBox( $out->msg( 'discourse-profile-error' ) );
 	}
 
-	public function render( string $username, RequestContext $context ): void {
-		$this->api->throwIfConfigInvalid();
-		$user = $this->userFactory->newFromName( $username );
+	public function render( User $user, RequestContext $context ): void {
 		$out = $context->getOutput();
-		$config = $context->getConfig();
-
 		$profileData = null;
 
 		if ( $user->isNamed() ) {
-			$profileData = $this->getProfileDataCached( $user, $config );
+			$profileData = $this->getProfileDataCached( $user );
 
 			if ( $profileData === null ) {
 				$out->addHTML( $this->makeNoProfileError( $out ) );
@@ -346,7 +338,7 @@ class ProfileRenderer {
 			}
 		}
 
-		$out->addHTML( $this->makeProfile( $user, $profileData, $out, $config ) );
+		$out->addHTML( $this->makeProfile( $user, $profileData, $out ) );
 		$out->addModules( 'ext.discourse.profile.scripts' );
 		$out->addModuleStyles( 'ext.discourse.profile.styles' );
 	}

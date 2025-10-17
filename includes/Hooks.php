@@ -13,7 +13,7 @@ use MediaWiki\Output\Hook\MakeGlobalVariablesScriptHook;
 use MediaWiki\Page\Hook\ArticleFromTitleHook;
 use MediaWiki\Preferences\Hook\GetPreferencesHook;
 use MediaWiki\SpecialPage\Hook\SpecialPageBeforeExecuteHook;
-use MediaWiki\User\UserNameUtils;
+use MediaWiki\User\UserFactory;
 
 class Hooks implements
 	ArticleFromTitleHook,
@@ -24,85 +24,97 @@ class Hooks implements
 	GetPreferencesHook,
 	MakeGlobalVariablesScriptHook
 {
-	private UserNameUtils $userNameUtils;
-	private ProfileRenderer $renderer;
-	private DiscourseAPIService $discourseAPI;
-
-	public function __construct( UserNameUtils $userNameUtils, ProfileRenderer $renderer, DiscourseAPIService $discourseAPI ) {
-		$this->userNameUtils = $userNameUtils;
-		$this->renderer = $renderer;
-		$this->discourseAPI = $discourseAPI;
+	public function __construct(
+		private readonly UserFactory $userFactory,
+		private readonly ProfileRenderer $renderer,
+		private readonly DiscourseAPIService $api,
+		private readonly ExtensionConfig $config,
+	) {
 	}
 
 	/** @inheritDoc */
 	public function onLoginFormValidErrorMessages( array &$messages ): void {
-		$messages[] = 'discourse-connect-requires-named';
+		if ( $this->config->isConnectEnabled() ) {
+			$messages[] = 'discourse-connect-requires-named';
+		}
 	}
 
 	/** @inheritDoc */
 	public function onArticleFromTitle( $title, &$article, $context ) {
 		if (
-			$context->getConfig()->get( 'DiscourseEnableProfile' ) &&
-			$title->hasSubjectNamespace( NS_USER ) &&
-			!$title->isSubpage() &&
-			$this->userNameUtils->isUsable( $title->getText() )
+			!$this->config->isProfileEnabled() ||
+			!$title->hasSubjectNamespace( NS_USER ) ||
+			$title->isSubpage()
 		) {
-			$article = new UserProfilePage( $title, $this->renderer );
+			return;
 		}
+		$article = new UserProfilePage(
+			$title,
+			$this->userFactory,
+			$this->renderer
+		);
 	}
 
 	/** @inheritDoc */
 	public function onSpecialPageBeforeExecute( $special, $subPage ) {
 		if (
-			$special->getConfig()->get( 'DiscourseEnableProfile' ) &&
-			$special->getName() === 'Contributions' &&
-			$subPage !== '' &&
-			$subPage !== null &&
-			($this->userNameUtils->isUsable( $subPage ) || $this->userNameUtils->isTemp( str_replace( '_', ' ', $subPage ) ))
+			!$this->config->isProfileEnabled() ||
+			$special->getName() !== 'Contributions' ||
+			$subPage === '' ||
+			$subPage === null
 		) {
-			$this->renderer->render( $subPage, $special->getContext() );
+			return;
 		}
+		$user = $this->userFactory->newFromName( $subPage );
+		if ( !$user || $user->isAnon() ) {
+			return;
+		}
+		$this->renderer->render( $user, $special->getContext() );
 	}
 
 	/** @inheritDoc */
-	public function onTalkPageLinkResolve(array &$linkAttributes): void {
-		if ( $linkAttributes['ns'] !== NS_MAIN ) {
+	public function onTalkPageLinkResolve( array &$linkAttributes ): void {
+		if (
+			!$this->config->isTalkButtonEnabled() ||
+			$linkAttributes['ns'] !== NS_MAIN
+		) {
 			return;
 		}
 
-		$cleanTitle = $this->discourseAPI->sanitizePageTitle( $linkAttributes['title'] );
+		$cleanTitle = $this->api->sanitizePageTitle( $linkAttributes['title'] );
 
 		if ( !$cleanTitle ) {
 			return;
 		}
 
-		$linkAttributes['href'] = $this->discourseAPI->getBaseUrl() . '/tag/' . $cleanTitle;
+		$linkAttributes['href'] = "{$this->config->getBaseUrl()}/tag/$cleanTitle";
 		unset( $linkAttributes['rel'] );
 	}
 
 	/** @inheritDoc */
 	public function onBeforePageDisplay( $out, $skin ): void {
-		if ($this->hasArticleTalk($skin)) {
+		if ( $this->hasArticleTalk( $skin ) ) {
 			$out->addModules( [ 'ext.discourse.articleTalk.scripts' ] );
 			$out->addModuleStyles( [ 'ext.discourse.articleTalk.styles' ] );
 		}
 	}
 
 	/** @inheritDoc */
-	public function onMakeGlobalVariablesScript(&$vars, $out): void {
+	public function onMakeGlobalVariablesScript( &$vars, $out ): void {
 		$title = $out->getTitle();
 
-		$vars["DiscourseBaseUrl"] = $this->discourseAPI->getBaseUrl();
-		$vars["DiscoursePageTag"] = $this->discourseAPI->sanitizePageTitle($title);
+		$vars['DiscourseBaseUrl'] = $this->config->getBaseUrl();
+		$vars['DiscoursePageTag'] = $this->api->sanitizePageTitle( $title );
 	}
 
 	private function hasArticleTalk( $skin ): bool {
 		$title = $skin->getTitle();
 		$action = $skin->getRequest()->getRawVal( 'action' ) ?? 'view';
 
-		$sanitizedTitle = $this->discourseAPI->sanitizePageTitle($title);
+		$sanitizedTitle = $this->api->sanitizePageTitle( $title );
 
-		return $title->inNamespace( NS_MAIN ) &&
+		return $this->config->areRelatedArticlesEnabled() &&
+			$title->inNamespace( NS_MAIN ) &&
 			$action === 'view' &&
 			!$title->isMainPage() &&
 			$title->exists() &&
@@ -111,6 +123,9 @@ class Hooks implements
 
 	/** @inheritDoc */
 	public function onGetPreferences( $user, &$preferences ) {
+		if ( !$this->config->isConnectEnabled() ) {
+			return;
+		}
 		$context = RequestContext::getMain();
 		$preferences['discourse-lowercase-username'] = [
 			'type' => 'toggle',

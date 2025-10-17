@@ -5,6 +5,8 @@ namespace MediaWiki\Extension\Discourse\Notify;
 use DateTime;
 use DateTimeZone;
 use MediaWiki\Api\ApiBase;
+use MediaWiki\Extension\Discourse\ExtensionConfig;
+use MediaWiki\Extension\Discourse\Profile\ProfileRenderer;
 use MediaWiki\Extension\Notifications\Model\Event;
 use MediaWiki\Logger\LoggerFactory;
 use MediaWiki\Registration\ExtensionRegistry;
@@ -14,9 +16,6 @@ use Wikimedia\ObjectCache\WANObjectCache;
 
 class DiscourseNotify extends ApiBase {
 	private LoggerInterface $logger;
-	private UserFactory $userFactory;
-	private WANObjectCache $cache;
-	private ExtensionRegistry $extensionRegistry;
 
 	private const DISCOURSE_NOTIFICATION_MENTIONED = 1;
 	private const DISCOURSE_NOTIFICATION_REPLIED = 2;
@@ -35,21 +34,22 @@ class DiscourseNotify extends ApiBase {
 	public function __construct(
 		$query,
 		$moduleName,
-		UserFactory $userFactory,
-		WANObjectCache $cache,
-		ExtensionRegistry $extensionRegistry,
+		private readonly UserFactory $userFactory,
+		private readonly WANObjectCache $cache,
+		private readonly ExtensionRegistry $extensionRegistry,
+		private readonly ExtensionConfig $config,
 	) {
-		$this->logger = LoggerFactory::getInstance( 'Discourse' );
-		$this->userFactory = $userFactory;
-		$this->cache = $cache;
-		$this->extensionRegistry = $extensionRegistry;
+		$this->logger = LoggerFactory::getInstance( ExtensionConfig::LOG_CHANNEL );
 		parent::__construct( $query, $moduleName );
 	}
 
 	public function execute() {
+		if ( !$this->config->isNotifyEnabled() ) {
+			$this->dieWithError( 'discourse-notify-disabled' );
+		}
 		$params = $this->extractRequestParams();
 		// TODO: Deduplicate with Special:DiscourseConnect.
-		$secret = $this->getConfig()->get( 'DiscourseConnectSecret' );
+		$secret = $this->config->getConnectSecret();
 		if ( $secret === false ) {
 			$this->dieWithError( 'discourse-connect-missing-secret' );
 		}
@@ -96,7 +96,7 @@ class DiscourseNotify extends ApiBase {
 			return;
 		}
 		$user = $this->userFactory->newFromId( intval( $args['user_id'] ) );
-		$baseUrl = $this->getConfig()->get( 'DiscourseBaseUrl' );
+		$baseUrl = $this->config->getBaseUrl();
 		$actorUrl = "$baseUrl/u/{$args['actor_username']}";
 		$topicUrl = "$baseUrl/t/-/{$args['topic_id']}";
 		$postUrl = $topicUrl;
@@ -152,7 +152,7 @@ class DiscourseNotify extends ApiBase {
 
 	private function purgeUser( array $args ): void {
 		// It's cheaper to clear cache without looking up the user.
-		$cacheKey = $this->cache->makeGlobalKey( 'DiscourseProfile', $args['user_id'] );
+		$cacheKey = ProfileRenderer::makeCacheKey( $this->cache, $args['user_id'] );
 		$this->cache->delete( $cacheKey );
 		$this->logger->debug( "Purged profile of user {$args['user_id']}" );
 	}
@@ -176,5 +176,13 @@ class DiscourseNotify extends ApiBase {
 				ApiBase::PARAM_REQUIRED => true
 			],
 		];
+	}
+
+	/**
+	 * Mark as internal. This isn't meant to be used by normal API users.
+	 * @return bool
+	 */
+	public function isInternal() {
+		return true;
 	}
 }

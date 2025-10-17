@@ -1,26 +1,36 @@
 <?php
 
+use MediaWiki\Config\ServiceOptions;
 use MediaWiki\Extension\Discourse\API\DiscourseAPIService;
+use MediaWiki\Extension\Discourse\ExtensionConfig;
 use MediaWiki\Extension\Discourse\Profile\ProfileRenderer;
 use MediaWiki\Logger\LoggerFactory;
 use MediaWiki\MediaWikiServices;
 
 return [
-	'DiscourseProfileRenderer' => static function ( MediaWikiServices $services ) {
-		return new ProfileRenderer(
-			$services->getUserFactory(),
-			$services->getUserGroupManager(),
-			$services->getUserOptionsLookup(),
-			$services->getService( 'DiscourseAPIService' ),
-			$services->getMainWANObjectCache(),
-			LoggerFactory::getInstance( 'Discourse' ),
-			$services->getRepoGroup()->getLocalRepo(),
-		);
-	},
-	'DiscourseAPIService' => static function ( MediaWikiServices $services ) {
-		return new DiscourseAPIService(
+	ExtensionConfig::SERVICE_NAME => fn (
+		MediaWikiServices $services,
+	): ExtensionConfig => new ExtensionConfig(
+		new ServiceOptions(
+			ExtensionConfig::CONSTRUCTOR_OPTIONS,
 			$services->getMainConfig(),
-			$services->getHttpRequestFactory(),
-		);
-	}
+		),
+	),
+	DiscourseAPIService::SERVICE_NAME => fn (
+		MediaWikiServices $services,
+	): DiscourseAPIService => new DiscourseAPIService(
+		$services->getService( ExtensionConfig::SERVICE_NAME ),
+		$services->getHttpRequestFactory(),
+	),
+	ProfileRenderer::SERVICE_NAME => fn (
+		MediaWikiServices $services,
+	): ProfileRenderer => new ProfileRenderer(
+		$services->getUserGroupManager(),
+		$services->getUserOptionsLookup(),
+		$services->getService( DiscourseAPIService::SERVICE_NAME ),
+		$services->getService( ExtensionConfig::SERVICE_NAME ),
+		$services->getMainWANObjectCache(),
+		LoggerFactory::getInstance( ExtensionConfig::LOG_CHANNEL ),
+		$services->getRepoGroup()->getLocalRepo(),
+	),
 ];

@@ -2,6 +2,7 @@
 
 namespace MediaWiki\Extension\Discourse\Maintenance;
 
+use MediaWiki\Extension\Discourse\API\DiscourseAPIService;
 use MediaWiki\Maintenance\Maintenance;
 use MediaWiki\Title\Title;
 
@@ -11,7 +12,6 @@ if ( $IP === false ) {
     $IP = __DIR__ . '/../../..';
 }
 require_once "$IP/maintenance/Maintenance.php";
-
 
 class BulkUploadDiscourseTags extends Maintenance {
     public function __construct() {
@@ -24,7 +24,8 @@ class BulkUploadDiscourseTags extends Maintenance {
         $pageStore = $services->getPageStore();
         $redirectStore = $services->getRedirectStore();
         $titleFactory = $services->getTitleFactory();
-        $discourseAPI = $services->getService( 'DiscourseAPIService' );
+        /** @var DiscourseAPIService */
+        $discourseAPI = $services->getService( DiscourseAPIService::SERVICE_NAME );
 
         $mainspacePages = $pageStore->newSelectQueryBuilder()
             ->whereNamespace( NS_MAIN )
@@ -65,9 +66,9 @@ class BulkUploadDiscourseTags extends Maintenance {
                 }
             }
         }
-        $this->output("Found " . count( $pageTitles ) . " tags to upload.\n");
+        $numTagsToUpload = count( $pageTitles );
+        $this->output( "Found $numTagsToUpload tags to upload.\n" );
 
-        $discourseAPI->throwIfConfigInvalid();
         $csv = implode( array_map(  static function( $title ) {
             return "$title,Articles\n";
         }, $pageTitles ) );
@@ -84,7 +85,8 @@ class BulkUploadDiscourseTags extends Maintenance {
             ]
         ] );
 
-        $this->output("Found " . count( $redirectTitles ) . " synonyms to upload.\n");
+        $numSynonymsToUpload = count( $redirectTitles );
+        $this->output("Found $numSynonymsToUpload synonyms to upload.\n");
 
         foreach ( $redirectTitles as $redirectTitle ) {
             [ $redirectPageTitle, $targetPageTitle ] = $redirectTitle;
@@ -95,7 +97,7 @@ class BulkUploadDiscourseTags extends Maintenance {
             ] );
             // Avoid getting ratelimited.
             sleep( 1 );
-            $this->output("Updated synoyms for $redirectPageTitle -> $targetPageTitle successfully.\n");
+            $this->output( "Updated synoyms for $redirectPageTitle -> $targetPageTitle successfully.\n" );
         }
     }
 }
