@@ -18,12 +18,10 @@
 	},
 	"SpecialPages": {
 		"DiscourseConnect": {
-			"class": "MediaWiki\\Extension\\Discourse\\SpecialPage\\DiscourseConnect",
+			"class": "MediaWiki\\Extension\\Discourse\\Connect\\DiscourseConnect",
 			"services": [
-				"PermissionManager",
-				"UserGroupManager",
-				"UserOptionsLookup",
-				"DiscourseConfig"
+				"DiscourseConfig",
+				"DiscourseConnectPayloadGenerator"
 			]
 		}
 	},
@@ -61,13 +59,17 @@
 	},
 	"Hooks": {
 		"ArticleFromTitle": "main",
+		"BeforeCreateEchoEvent": "echo",
+		"BeforePageDisplay": "main",
+		"ConfirmEmailComplete": "connect",
+		"GetPreferences": "main",
 		"LoginFormValidErrorMessages": "main",
+		"MakeGlobalVariablesScript": "main",
+		"PrefsEmailAudit": "connect",
+		"RenameUserComplete": "connect",
 		"SpecialPageBeforeExecute": "main",
 		"TalkPageLinkResolve": "main",
-		"BeforePageDisplay": "main",
-		"MakeGlobalVariablesScript": "main",
-		"GetPreferences": "main",
-		"BeforeCreateEchoEvent": "echo"
+		"UserGroupsChanged": "connect"
 	},
 	"HookHandlers": {
 		"main": {
@@ -75,6 +77,15 @@
 			"services": [
 				"UserFactory",
 				"DiscourseProfileRenderer",
+				"DiscourseAPIService",
+				"DiscourseConfig"
+			]
+		},
+		"connect": {
+			"class": "MediaWiki\\Extension\\Discourse\\Connect\\DiscourseConnectHooks",
+			"services": [
+				"UserFactory",
+				"DiscourseConnectPayloadGenerator",
 				"DiscourseAPIService",
 				"DiscourseConfig"
 			]

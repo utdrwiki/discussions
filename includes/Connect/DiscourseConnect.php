@@ -1,21 +1,16 @@
 <?php
 
-namespace MediaWiki\Extension\Discourse\SpecialPage;
+namespace MediaWiki\Extension\Discourse\Connect;
 
 use MediaWiki\Exception\BadRequestError;
 use MediaWiki\Extension\Discourse\ExtensionConfig;
-use MediaWiki\Permissions\PermissionManager;
 use MediaWiki\SpecialPage\UnlistedSpecialPage;
-use MediaWiki\User\Options\UserOptionsLookup;
 use MediaWiki\User\User;
-use MediaWiki\User\UserGroupManager;
 
 class DiscourseConnect extends UnlistedSpecialPage {
 	public function __construct(
-		private readonly PermissionManager $permissionManager,
-		private readonly UserGroupManager $userGroupManager,
-		private readonly UserOptionsLookup $userOptionsLookup,
 		private readonly ExtensionConfig $config,
+		private readonly DiscourseConnectPayloadGenerator $payloadGenerator,
 	) {
 		parent::__construct( 'DiscourseConnect' );
 	}
@@ -62,43 +57,6 @@ class DiscourseConnect extends UnlistedSpecialPage {
 		return $payloadParams;
 	}
 
-	private function getDiscourseGroups( User $user ): array {
-		$groupMap = $this->config->getGroupMap();
-		if ( $groupMap === null ) {
-			return [];
-		}
-		$groups = $this->userGroupManager->getUserEffectiveGroups( $user );
-		$groupSet = [];
-		foreach ( $groups as $group ) {
-			if ( !isset( $groupMap[$group] ) ) {
-				continue;
-			}
-			foreach ( $groupMap[$group] as $group ) {
-				$groupSet[$group] = true;
-			}
-		}
-		return array_keys( $groupSet );
-	}
-
-	private function getLoginPayload( User $user, array $payload ): array {
-		$isAdmin = $this->permissionManager->userHasRight( $user, 'discourse-admin' );
-		$isModerator = $this->permissionManager->userHasRight( $user, 'discourse-moderator' );
-		$groups = $this->getDiscourseGroups($user );
-		$isLowercase = $this->userOptionsLookup->getBoolOption( $user, 'discourse-lowercase-username' );
-		return [
-			'nonce' => $payload['nonce'],
-			'email' => $user->getEmail(),
-			'external_id' => $user->getId(),
-			'username' =>  $isLowercase ?
-				$this->getLanguage()->lcfirst( $user->getName() ) :
-				$user->getName(),
-			'admin' => $isAdmin ? 'true' : 'false',
-			'moderator' => $isModerator ? 'true' : 'false',
-			'groups' => implode( ',', $groups ),
-			'suppress_welcome_message' => $this->config->isWelcomeMessageSuppressed() ? 'true' : 'false',
-		];
-	}
-
 	private function getLoginUrlFromPayload( string $returnUrl, array $payload ): string {
 		$encodedPayload = base64_encode( http_build_query( $payload ) );
 		$signature = hash_hmac( 'sha256', $encodedPayload, $this->config->getConnectSecret() );
@@ -117,7 +75,8 @@ class DiscourseConnect extends UnlistedSpecialPage {
 		$user = $this->getUser();
 		$this->validateUser( $user );
 		$payload = $this->validatePayload();
-		$loginPayload = $this->getLoginPayload( $user, $payload );
+		$loginPayload = $this->payloadGenerator->getPayload( $user );
+		$loginPayload['nonce'] = $payload['nonce'];
 		$returnUrl = $payload['return_sso_url'];
 		$loginUrl = $this->getLoginUrlFromPayload( $returnUrl, $loginPayload );
 		$this->getOutput()->redirect( $loginUrl );

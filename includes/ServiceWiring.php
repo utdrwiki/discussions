@@ -2,6 +2,7 @@
 
 use MediaWiki\Config\ServiceOptions;
 use MediaWiki\Extension\Discourse\API\DiscourseAPIService;
+use MediaWiki\Extension\Discourse\Connect\DiscourseConnectPayloadGenerator;
 use MediaWiki\Extension\Discourse\ExtensionConfig;
 use MediaWiki\Extension\Discourse\Profile\ProfileRenderer;
 use MediaWiki\Logger\LoggerFactory;
@@ -21,6 +22,14 @@ return [
 	): DiscourseAPIService => new DiscourseAPIService(
 		$services->getService( ExtensionConfig::SERVICE_NAME ),
 		$services->getHttpRequestFactory(),
+	),
+	DiscourseConnectPayloadGenerator::SERVICE_NAME => fn (
+		MediaWikiServices $services,
+	): DiscourseConnectPayloadGenerator => new DiscourseConnectPayloadGenerator(
+		$services->getPermissionManager(),
+		$services->getUserGroupManager(),
+		$services->getUserOptionsLookup(),
+		$services->getService( ExtensionConfig::SERVICE_NAME ),
 	),
 	ProfileRenderer::SERVICE_NAME => fn (
 		MediaWikiServices $services,
