@@ -13,6 +13,9 @@
 			"i18n"
 		]
 	},
+	"ExtensionMessagesFiles": {
+		"DiscourseAliases": "Discourse.i18n.alias.php"
+	},
 	"SpecialPages": {
 		"DiscourseConnect": {
 			"class": "MediaWiki\\Extension\\Discourse\\SpecialPage\\DiscourseConnect",
