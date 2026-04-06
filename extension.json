@@ -63,6 +63,7 @@
 		"BeforePageDisplay": "main",
 		"ConfirmEmailComplete": "connect",
 		"GetPreferences": "main",
+		"InvalidateEmailComplete": "connect",
 		"LoginFormValidErrorMessages": "main",
 		"MakeGlobalVariablesScript": "main",
 		"PrefsEmailAudit": "connect",

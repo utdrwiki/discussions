@@ -11,14 +11,16 @@ use MediaWiki\Logger\LoggerFactory;
 use MediaWiki\RenameUser\Hook\RenameUserCompleteHook;
 use MediaWiki\User\Hook\ConfirmEmailCompleteHook;
 use MediaWiki\User\Hook\UserGroupsChangedHook;
-use MediaWiki\User\User;
+use MediaWiki\User\Hook\InvalidateEmailCompleteHook;
 use MediaWiki\User\UserFactory;
+use MediaWiki\User\UserIdentity;
 use Psr\Log\LoggerInterface;
 
 class DiscourseConnectHooks implements
 	RenameUserCompleteHook,
 	UserGroupsChangedHook,
 	ConfirmEmailCompleteHook,
+	InvalidateEmailCompleteHook,
 	PrefsEmailAuditHook
 {
 	private LoggerInterface $logger;
@@ -31,7 +33,8 @@ class DiscourseConnectHooks implements
 		$this->logger = LoggerFactory::getInstance( ExtensionConfig::LOG_CHANNEL );
 	}
 
-	private function syncDiscourseSso( User $user ): void {
+	private function syncDiscourseSso( UserIdentity $userIdentity ): void {
+		$user = $this->userFactory->newFromUserIdentity( $userIdentity );
 		$payload = $this->payloadGenerator->getPayload( $user );
 		$ssoPayload = base64_encode( http_build_query( $payload ) );
 		$secret = $this->config->getConnectSecret();
@@ -50,6 +53,7 @@ class DiscourseConnectHooks implements
 		}
 	}
 
+	/** @inheritDoc */
 	public function onRenameUserComplete( int $uid, string $old, string $new ): void {
 		if ( !$this->config->isConnectEnabled() ) {
 			return;
@@ -58,6 +62,7 @@ class DiscourseConnectHooks implements
 		$this->syncDiscourseSso( $user );
 	}
 
+	/** @inheritDoc */
 	public function onUserGroupsChanged( $user, $added, $removed, $performer, $reason, $oldUGMs, $newUGMs ) {
 		if ( !$this->config->isConnectEnabled() ) {
 			return;
@@ -65,6 +70,7 @@ class DiscourseConnectHooks implements
 		$this->syncDiscourseSso( $user );
 	}
 
+	/** @inheritDoc */
 	public function onConfirmEmailComplete( $user ) {
 		if ( !$this->config->isConnectEnabled() ) {
 			return;
@@ -72,7 +78,16 @@ class DiscourseConnectHooks implements
 		$this->syncDiscourseSso( $user );
 	}
 
+	/** @inheritDoc */
 	public function onPrefsEmailAudit( $user, $oldaddr, $newaddr ) {
+		if ( !$this->config->isConnectEnabled() ) {
+			return;
+		}
+		$this->syncDiscourseSso( $user );
+	}
+
+	/** @inheritDoc */
+	public function onInvalidateEmailComplete( $user ) {
 		if ( !$this->config->isConnectEnabled() ) {
 			return;
 		}
