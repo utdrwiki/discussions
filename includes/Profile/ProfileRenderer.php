@@ -123,7 +123,7 @@ class ProfileRenderer {
 			return $this->getDefaultProfileAvatar( $user );
 		}
 
-		$avatarTextLines = explode( '\n', trim( $avatarText ) );
+		$avatarTextLines = explode( "\n", trim( $avatarText ) );
 
 		$userHash = md5( $user->getName() );
 		// 4 bytes seems like plenty
