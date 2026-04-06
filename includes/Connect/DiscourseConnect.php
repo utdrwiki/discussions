@@ -5,7 +5,6 @@ namespace MediaWiki\Extension\Discourse\Connect;
 use MediaWiki\Exception\BadRequestError;
 use MediaWiki\Extension\Discourse\ExtensionConfig;
 use MediaWiki\SpecialPage\UnlistedSpecialPage;
-use MediaWiki\User\User;
 
 class DiscourseConnect extends UnlistedSpecialPage {
 	public function __construct(
@@ -18,16 +17,6 @@ class DiscourseConnect extends UnlistedSpecialPage {
 	/** @inheritDoc */
 	protected function getLoginSecurityLevel() {
 		return false;
-	}
-
-	private function validateUser( User $user ): void {
-		$this->requireNamedUser( 'discourse-connect-requires-named' );
-		if ( $user->getEmail() === '' ) {
-			throw new BadRequestError( 'discourse-connect-valid-email', 'discourse-connect-add-email' );
-		}
-		if ( !$user->isEmailConfirmed() ) {
-			throw new BadRequestError( 'discourse-connect-valid-email', 'discourse-connect-confirm-email' );
-		}
 	}
 
 	private function validatePayload(): array {
@@ -73,7 +62,7 @@ class DiscourseConnect extends UnlistedSpecialPage {
 			throw new BadRequestError( 'discourse-connect-bad-request', 'discourse-connect-disabled' );
 		}
 		$user = $this->getUser();
-		$this->validateUser( $user );
+		$this->requireNamedUser( 'discourse-connect-requires-named' );
 		$payload = $this->validatePayload();
 		$loginPayload = $this->payloadGenerator->getPayload( $user );
 		$loginPayload['nonce'] = $payload['nonce'];
