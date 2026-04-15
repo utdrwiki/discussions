@@ -43,6 +43,7 @@ class DiscourseNotify extends ApiBase {
 		parent::__construct( $query, $moduleName );
 	}
 
+	/** @inheritDoc */
 	public function execute() {
 		if ( !$this->config->isNotifyEnabled() ) {
 			$this->dieWithError( 'discourse-notify-disabled' );
@@ -86,6 +87,10 @@ class DiscourseNotify extends ApiBase {
 		}
 	}
 
+	/**
+	 * Sends a MediaWiki notification to a particular user who got notified
+	 * from Discourse.
+	 */
 	private function notifyUser( array $args ): void {
 		$this->logger->debug( 'Received notification from Discourse', $args );
 		if ( !$this->extensionRegistry->isLoaded( 'Echo' ) ) {
@@ -117,6 +122,9 @@ class DiscourseNotify extends ApiBase {
 		] );
 	}
 
+	/**
+	 * Maps a Discourse notification type to the MediaWiki notification type.
+	 */
 	private function getEventType( int $notificationType ): ?string {
 		switch ( $notificationType ) {
 			case self::DISCOURSE_NOTIFICATION_MENTIONED:
@@ -150,21 +158,28 @@ class DiscourseNotify extends ApiBase {
 		}
 	}
 
+	/**
+	 * Purges the user cache whenever Discourse sends a message that their
+	 * profile has been updated. It's cheaper to clear cache without looking up
+	 * the user.
+	 */
 	private function purgeUser( array $args ): void {
-		// It's cheaper to clear cache without looking up the user.
 		$cacheKey = ProfileRenderer::makeCacheKey( $this->cache, $args['user_id'] );
 		$this->cache->delete( $cacheKey );
 		$this->logger->debug( "Purged profile of user {$args['user_id']}" );
 	}
 
+	/** @inheritDoc */
 	public function mustBePosted() {
 		return true;
 	}
 
+	/** @inheritDoc */
 	public function isWriteMode() {
 		return true;
 	}
 
+	/** @inheritDoc */
 	protected function getAllowedParams() {
 		return [
 			'payload' => [
@@ -180,9 +195,15 @@ class DiscourseNotify extends ApiBase {
 
 	/**
 	 * Mark as internal. This isn't meant to be used by normal API users.
-	 * @return bool
 	 */
 	public function isInternal() {
 		return true;
+	}
+
+	/**
+	 * Mark API endpoint as deprecated if DiscourseNotify is not enabled.
+	 */
+	public function isDeprecated(): bool {
+		return !$this->config->isNotifyEnabled();
 	}
 }
