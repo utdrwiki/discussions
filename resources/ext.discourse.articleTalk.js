@@ -16,7 +16,7 @@ async function fetchHotPostsForTag(tag) {
 		const opId = topicData.posters[0].user_id;
 		const author = data.users.find(user => user.id === opId);
 
-		const linkUrl = new URL(`t/${topicData.slug}`, getDiscourseBaseUrl());
+		const linkUrl = new URL(`t/${topicData.slug}/${topicData.id}`, getDiscourseBaseUrl());
 
 		const avatarUrl = new URL(author.avatar_template.replace("{size}", "64"), getDiscourseBaseUrl());
 
