@@ -23,7 +23,7 @@ after_initialize do
   require_relative "lib/notify_mediawiki"
 
   on(:notification_created) do |notification|
-    return if notification.user.single_sign_on_record.nil?
+    next if notification.user.single_sign_on_record.nil?
     user_id = notification.user.single_sign_on_record.external_id
     data = JSON.parse(notification.data)
     Rails.logger.info("DiscourseNotify: queueing notification for #{user_id}")
@@ -38,7 +38,7 @@ after_initialize do
   end
 
   on(:user_updated) do |user|
-    return if user.single_sign_on_record.nil?
+    next if user.single_sign_on_record.nil?
     user_id = user.single_sign_on_record.external_id
     Rails.logger.info("DiscourseNotify: queueing user update for #{user_id}")
     Jobs.enqueue(:notify_mediawiki,
