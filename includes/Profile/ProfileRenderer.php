@@ -54,8 +54,9 @@ class ProfileRenderer {
 		$username = $user->getName();
 		$baseUrl = $this->config->getBaseUrl();
 		$defaultAvatarColor = $this->config->getDefaultAvatarColor();
+		$firstLetter = mb_substr( $username, 0, 1 );
 
-		return "$baseUrl/letter_avatar_proxy/v4/letter/{$username[0]}/$defaultAvatarColor/144.png";
+		return "$baseUrl/letter_avatar_proxy/v4/letter/$firstLetter/$defaultAvatarColor/144.png";
 	}
 
 	private function getProfileData( User $user ): ?array {
