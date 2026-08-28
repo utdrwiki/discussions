@@ -1,4 +1,9 @@
 {
+	"@metadata": {
+		"authors": [
+			"KockaAdmiralac"
+		]
+	},
 	"apihelp-discoursenotify-summary": "Receives notification from Discourse.",
 	"apihelp-discoursenotify-param-payload": "Notification payload in Base64 format, URI encoded, with a timestamp field to protect against replay attacks.",
 	"apihelp-discoursenotify-param-signature": "HMAC signature of the payload, using the shared secret.",
