@@ -7,12 +7,12 @@ use MediaWiki\Extension\Discourse\API\DiscourseAPIService;
 use MediaWiki\Extension\Discourse\Profile\ProfileRenderer;
 use MediaWiki\Extension\Discourse\Profile\UserProfilePage;
 use MediaWiki\Extension\Discourse\Hooks\TalkPageLinkResolveHook;
-use MediaWiki\Hook\LoginFormValidErrorMessagesHook;
 use MediaWiki\Output\Hook\BeforePageDisplayHook;
 use MediaWiki\Output\Hook\MakeGlobalVariablesScriptHook;
 use MediaWiki\Page\Hook\ArticleFromTitleHook;
 use MediaWiki\Preferences\Hook\GetPreferencesHook;
 use MediaWiki\SpecialPage\Hook\SpecialPageBeforeExecuteHook;
+use MediaWiki\Specials\Hook\LoginFormValidErrorMessagesHook;
 use MediaWiki\User\UserFactory;
 
 class Hooks implements

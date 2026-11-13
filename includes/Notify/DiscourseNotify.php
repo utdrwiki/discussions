@@ -13,6 +13,7 @@ use MediaWiki\Registration\ExtensionRegistry;
 use MediaWiki\User\UserFactory;
 use Psr\Log\LoggerInterface;
 use Wikimedia\ObjectCache\WANObjectCache;
+use Wikimedia\ParamValidator\ParamValidator;
 
 class DiscourseNotify extends ApiBase {
 	private LoggerInterface $logger;
@@ -183,12 +184,12 @@ class DiscourseNotify extends ApiBase {
 	protected function getAllowedParams() {
 		return [
 			'payload' => [
-				ApiBase::PARAM_TYPE => 'string',
-				ApiBase::PARAM_REQUIRED => true
+				ParamValidator::PARAM_TYPE => 'string',
+				ParamValidator::PARAM_REQUIRED => true
 			],
 			'signature' => [
-				ApiBase::PARAM_TYPE => 'string',
-				ApiBase::PARAM_REQUIRED => true
+				ParamValidator::PARAM_TYPE => 'string',
+				ParamValidator::PARAM_REQUIRED => true
 			],
 		];
 	}

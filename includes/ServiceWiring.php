@@ -38,7 +38,7 @@ return [
 		$services->getUserOptionsLookup(),
 		$services->getService( DiscourseAPIService::SERVICE_NAME ),
 		$services->getService( ExtensionConfig::SERVICE_NAME ),
-		$services->getMainWANObjectCache(),
+		$services->getWANObjectCache(),
 		LoggerFactory::getInstance( ExtensionConfig::LOG_CHANNEL ),
 		$services->getRepoGroup()->getLocalRepo(),
 	),

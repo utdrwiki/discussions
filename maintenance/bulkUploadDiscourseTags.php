@@ -5,7 +5,8 @@ namespace MediaWiki\Extension\Discourse\Maintenance;
 use MediaWiki\Extension\Discourse\API\DiscourseAPIService;
 use MediaWiki\Maintenance\Maintenance;
 use MediaWiki\Title\Title;
-
+use function count;
+use function in_array;
 
 $IP = getenv( 'MW_INSTALL_PATH' );
 if ( $IP === false ) {
@@ -69,9 +70,7 @@ class BulkUploadDiscourseTags extends Maintenance {
         $numTagsToUpload = count( $pageTitles );
         $this->output( "Found $numTagsToUpload tags to upload.\n" );
 
-        $csv = implode( array_map(  static function( $title ) {
-            return "$title,Articles\n";
-        }, $pageTitles ) );
+        $csv = implode( array_map( fn ( $title ) => "$title,Articles\n", $pageTitles ) );
         $discourseAPI->makeRequest( '/tags/upload.json', 'POST', [
             'multipart' => [
                 [
